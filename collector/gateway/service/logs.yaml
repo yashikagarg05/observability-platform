@@ -1,0 +1,15 @@
+receivers:
+  - otlp
+  - receiver_creator/docker_logs
+  - file_log/local
+processors:
+  - transform/normalize_json
+  - transform/normalize_serilog
+  - transform/timestamp
+  - transform/severity
+  - transform/service_identity
+  - transform/resource_identity
+  - transform/source_provenance
+  - batch
+exporters:
+  - otlp_http/loki

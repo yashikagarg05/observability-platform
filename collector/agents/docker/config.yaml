@@ -1,0 +1,74 @@
+extensions:
+  docker_observer:
+    endpoint: unix:///var/run/docker.sock
+    timeout: 5s
+    cache_sync_interval: 1m
+    include_all_containers: true
+    excluded_images:
+      - otel/opentelemetry-collector-contrib:0.156.0
+  file_storage/offsets:
+    directory: /var/lib/otelcol/offsets
+    create_directory: true
+  file_storage/queue:
+    directory: /var/lib/otelcol/queue
+    create_directory: true
+
+receivers:
+  receiver_creator/docker:
+    watch_observers: [docker_observer]
+    receivers:
+      file_log/docker:
+        rule: type == "container" && port == 0
+        resource_attributes:
+          container.id: '`container_id`'
+          container.name: '`name`'
+          container.image.name: '`image`'
+        config:
+          include:
+            - /var/lib/docker/containers/`container_id`/`container_id`-json.log
+          start_at: end
+          storage: file_storage/offsets
+          include_file_name: false
+          include_file_path: false
+          operators:
+            - id: unwrap_docker_envelope
+              type: container
+              format: docker
+              add_metadata_from_filepath: false
+              output: identify_source
+            - id: identify_source
+              type: add
+              field: attributes.log.source.type
+              value: docker
+
+processors:
+  resource/host:
+    attributes:
+      - key: host.name
+        action: upsert
+        value: ${env:AGENT_HOST_NAME}
+      - key: service.namespace
+        action: upsert
+        value: ${env:OTEL_SERVICE_NAMESPACE}
+      - key: deployment.environment
+        action: upsert
+        value: ${env:OTEL_DEPLOYMENT_ENVIRONMENT}
+  batch:
+
+exporters:
+  otlp_grpc/gateway:
+    endpoint: ${env:GATEWAY_OTLP_GRPC_ENDPOINT}
+    tls:
+      insecure: true
+    sending_queue:
+      storage: file_storage/queue
+    retry_on_failure:
+      max_elapsed_time: 0s
+
+service:
+  extensions: [docker_observer, file_storage/offsets, file_storage/queue]
+  pipelines:
+    logs:
+      receivers: [receiver_creator/docker]
+      processors: [resource/host, batch]
+      exporters: [otlp_grpc/gateway]

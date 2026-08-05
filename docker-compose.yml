@@ -1,0 +1,125 @@
+services:
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "${GRAFANA_PORT}:3000"
+
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+
+    volumes:
+      - grafana-data:/var/lib/grafana
+
+    restart: unless-stopped
+
+    networks:
+      - observability
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/rootfs'
+
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+
+    expose:
+      - "9100"
+
+    restart: unless-stopped
+
+    networks:
+      - observability
+
+  prometheus:
+    image: prom/prometheus:latest
+
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+
+    ports:
+      - "${PROMETHEUS_PORT}:9090"
+
+    restart: unless-stopped
+
+    networks:
+      - observability
+
+  loki:
+    image: grafana/loki:latest
+
+    command:
+      - "-config.file=/etc/loki/config.yaml"
+
+    volumes:
+      - ./loki/config.yaml:/etc/loki/config.yaml:ro
+      - loki-data:/loki
+
+    expose:
+      - "3100"
+
+    restart: unless-stopped
+
+    networks:
+      - observability
+  
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.156.0
+    user: "0:0"
+    command:
+      - "--config=/etc/otelcol/config.yaml"
+ 
+    volumes:
+      - ./collector/gateway:/etc/otelcol:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+
+    restart: unless-stopped
+
+    networks:
+      - observability
+
+  tempo:
+    image: grafana/tempo:latest
+
+    command:
+      - "-config.file=/etc/tempo/config.yaml"
+
+    volumes:
+      - ./tempo/config.yaml:/etc/tempo/config.yaml:ro
+      - tempo-data:/var/tempo
+
+    expose:
+      - "3200"
+      - "4317"
+      - "4318"
+
+    restart: unless-stopped
+
+    networks:
+      - observability
+
+networks:
+  observability:
+
+volumes:
+  grafana-data:
+  prometheus-data:
+  tempo-data:
+  loki-data:

@@ -1,0 +1,41 @@
+extensions:
+  file_storage/queue:
+    directory: /var/lib/otelcol/queue
+    create_directory: true
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+
+exporters:
+  otlp_grpc/gateway:
+    endpoint: ${env:GATEWAY_OTLP_GRPC_ENDPOINT}
+    tls:
+      insecure: true
+    sending_queue:
+      storage: file_storage/queue
+    retry_on_failure:
+      max_elapsed_time: 0s
+
+service:
+  extensions: [file_storage/queue]
+  pipelines:
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp_grpc/gateway]
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp_grpc/gateway]
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp_grpc/gateway]

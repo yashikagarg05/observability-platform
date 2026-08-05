@@ -1,0 +1,7 @@
+error_mode: ignore
+log_statements:
+  - context: log
+    statements:
+      - merge_maps(log.cache, ParseJSON(log.body), "upsert") where IsString(log.body) and IsMatch(log.body, "^\\s*\\{")
+      - merge_maps(log.attributes, log.cache, "upsert") where log.cache != nil
+      - set(log.body, log.cache["message"]) where log.cache["message"] != nil

@@ -1,0 +1,6 @@
+error_mode: ignore
+log_statements:
+  - context: log
+    statements:
+      - set(log.time, Time(log.attributes["timestamp"], "%Y-%m-%dT%H:%M:%S.%LZ")) where log.attributes["timestamp"] != nil
+      - set(log.time, Time(log.attributes["Timestamp"], "%Y-%m-%dT%H:%M:%S.%f%z")) where log.attributes["Timestamp"] != nil

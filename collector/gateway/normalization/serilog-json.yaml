@@ -1,0 +1,5 @@
+error_mode: ignore
+log_statements:
+  - context: log
+    statements:
+      - set(log.body, log.attributes["Message"]) where log.attributes["Message"] != nil

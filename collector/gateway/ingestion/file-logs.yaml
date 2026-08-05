@@ -1,0 +1,10 @@
+include:
+  - ${env:LOCAL_FILE_LOG_GLOB:-/var/log/observability/*.log}
+start_at: end
+include_file_name: true
+include_file_path: true
+operators:
+  - id: identify_file_source
+    type: add
+    field: attributes.log.source.type
+    value: file

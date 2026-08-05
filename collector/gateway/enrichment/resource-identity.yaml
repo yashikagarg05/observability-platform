@@ -1,0 +1,7 @@
+error_mode: ignore
+log_statements:
+  - context: resource
+    statements:
+      - set(resource.attributes["service.name"], resource.attributes["container.name"]) where resource.attributes["service.name"] == nil and resource.attributes["container.name"] != nil
+      - set(resource.attributes["service.namespace"], "observability") where resource.attributes["service.namespace"] == nil
+      - set(resource.attributes["deployment.environment"], "docker") where resource.attributes["deployment.environment"] == nil

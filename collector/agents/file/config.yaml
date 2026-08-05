@@ -1,0 +1,56 @@
+extensions:
+  file_storage/offsets:
+    directory: /var/lib/otelcol/offsets
+    create_directory: true
+  file_storage/queue:
+    directory: /var/lib/otelcol/queue
+    create_directory: true
+
+receivers:
+  file_log/application:
+    include:
+      - /var/log/application/${env:APP_LOG_GLOB}
+    start_at: end
+    storage: file_storage/offsets
+    include_file_name: true
+    include_file_path: true
+    operators:
+      - id: identify_source
+        type: add
+        field: attributes.log.source.type
+        value: file
+
+processors:
+  resource/host:
+    attributes:
+      - key: host.name
+        action: upsert
+        value: ${env:AGENT_HOST_NAME}
+      - key: service.name
+        action: insert
+        value: ${env:OTEL_SERVICE_NAME}
+      - key: service.namespace
+        action: upsert
+        value: ${env:OTEL_SERVICE_NAMESPACE}
+      - key: deployment.environment
+        action: upsert
+        value: ${env:OTEL_DEPLOYMENT_ENVIRONMENT}
+  batch:
+
+exporters:
+  otlp_grpc/gateway:
+    endpoint: ${env:GATEWAY_OTLP_GRPC_ENDPOINT}
+    tls:
+      insecure: true
+    sending_queue:
+      storage: file_storage/queue
+    retry_on_failure:
+      max_elapsed_time: 0s
+
+service:
+  extensions: [file_storage/offsets, file_storage/queue]
+  pipelines:
+    logs:
+      receivers: [file_log/application]
+      processors: [resource/host, batch]
+      exporters: [otlp_grpc/gateway]

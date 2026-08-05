@@ -1,0 +1,20 @@
+services:
+  otel-file-agent:
+    image: otel/opentelemetry-collector-contrib:0.156.0
+    user: "0:0"
+    command: ["--config=/etc/otelcol/config.yaml"]
+    environment:
+      GATEWAY_OTLP_GRPC_ENDPOINT: ${GATEWAY_OTLP_GRPC_ENDPOINT:?set the gateway host and port}
+      AGENT_HOST_NAME: ${AGENT_HOST_NAME:?set this application host name}
+      APP_LOG_GLOB: ${APP_LOG_GLOB:-*.log}
+      OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:?set the fallback service name}
+      OTEL_SERVICE_NAMESPACE: ${OTEL_SERVICE_NAMESPACE:-applications}
+      OTEL_DEPLOYMENT_ENVIRONMENT: ${OTEL_DEPLOYMENT_ENVIRONMENT:-production}
+    volumes:
+      - ./config.yaml:/etc/otelcol/config.yaml:ro
+      - ${APP_LOG_HOST_PATH:?set the host log directory}:/var/log/application:ro
+      - otel-file-agent-state:/var/lib/otelcol
+    restart: unless-stopped
+
+volumes:
+  otel-file-agent-state:

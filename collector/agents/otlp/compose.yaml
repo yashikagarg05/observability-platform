@@ -1,0 +1,17 @@
+services:
+  otel-otlp-agent:
+    image: otel/opentelemetry-collector-contrib:0.156.0
+    user: "0:0"
+    command: ["--config=/etc/otelcol/config.yaml"]
+    environment:
+      GATEWAY_OTLP_GRPC_ENDPOINT: ${GATEWAY_OTLP_GRPC_ENDPOINT:?set the gateway host and port}
+    volumes:
+      - ./config.yaml:/etc/otelcol/config.yaml:ro
+      - otel-otlp-agent-state:/var/lib/otelcol
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    restart: unless-stopped
+
+volumes:
+  otel-otlp-agent-state:

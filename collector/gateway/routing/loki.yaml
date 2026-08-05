@@ -1,0 +1,1 @@
+endpoint: http://loki:3100/otlp

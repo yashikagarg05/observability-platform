@@ -1,0 +1,5 @@
+error_mode: ignore
+log_statements:
+  - context: log
+    statements:
+      - set(log.attributes["log.source.type"], "otlp") where log.attributes["log.source.type"] == nil

@@ -1,0 +1,11 @@
+error_mode: ignore
+log_statements:
+  - context: log
+    statements:
+      - set(log.severity_text, log.attributes["level"]) where log.attributes["level"] != nil
+      - set(log.severity_text, log.attributes["Level"]) where log.attributes["Level"] != nil
+      - set(log.severity_number, SEVERITY_NUMBER_DEBUG) where log.severity_text == "DEBUG" or log.severity_text == "Debug"
+      - set(log.severity_number, SEVERITY_NUMBER_INFO) where log.severity_text == "INFO" or log.severity_text == "Information"
+      - set(log.severity_number, SEVERITY_NUMBER_WARN) where log.severity_text == "WARN" or log.severity_text == "Warning"
+      - set(log.severity_number, SEVERITY_NUMBER_ERROR) where log.severity_text == "ERROR" or log.severity_text == "Error"
+      - set(log.severity_number, SEVERITY_NUMBER_FATAL) where log.severity_text == "FATAL" or log.severity_text == "Fatal"

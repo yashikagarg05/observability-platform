@@ -1,0 +1,6 @@
+receivers:
+  - otlp
+processors:
+  - batch
+exporters:
+  - otlp_grpc/tempo

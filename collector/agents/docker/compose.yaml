@@ -1,0 +1,19 @@
+services:
+  otel-docker-agent:
+    image: otel/opentelemetry-collector-contrib:0.156.0
+    user: "0:0"
+    command: ["--config=/etc/otelcol/config.yaml"]
+    environment:
+      GATEWAY_OTLP_GRPC_ENDPOINT: ${GATEWAY_OTLP_GRPC_ENDPOINT:?set the gateway host and port}
+      AGENT_HOST_NAME: ${AGENT_HOST_NAME:?set this Docker host name}
+      OTEL_SERVICE_NAMESPACE: ${OTEL_SERVICE_NAMESPACE:-docker}
+      OTEL_DEPLOYMENT_ENVIRONMENT: ${OTEL_DEPLOYMENT_ENVIRONMENT:-production}
+    volumes:
+      - ./config.yaml:/etc/otelcol/config.yaml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - otel-docker-agent-state:/var/lib/otelcol
+    restart: unless-stopped
+
+volumes:
+  otel-docker-agent-state:
