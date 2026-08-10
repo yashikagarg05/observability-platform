@@ -1,0 +1,9 @@
+{
+  "name": "docker-file-hostmetrics",
+  "capabilities": [
+    "otlp",
+    "docker",
+    "filelog",
+    "hostmetrics"
+  ]
+}

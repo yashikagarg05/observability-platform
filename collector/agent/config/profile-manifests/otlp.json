@@ -1,0 +1,6 @@
+{
+  "name": "otlp",
+  "capabilities": [
+    "otlp"
+  ]
+}

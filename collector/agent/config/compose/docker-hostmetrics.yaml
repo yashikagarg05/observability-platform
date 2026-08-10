@@ -1,0 +1,7 @@
+services:
+  otel-node-agent:
+    command: ["--config=/etc/otelcol/config/generated/docker-hostmetrics${NODE_AGENT_TRANSPORT_SUFFIX:-}.yaml"]
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /:/hostfs:ro

@@ -1,10 +1,9 @@
 receivers:
   - otlp
-  - receiver_creator/docker_logs
-  - file_log/local
 processors:
   - transform/normalize_json
   - transform/normalize_serilog
+  - transform/trace_context
   - transform/timestamp
   - transform/severity
   - transform/service_identity

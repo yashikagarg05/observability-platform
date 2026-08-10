@@ -1,7 +1,7 @@
 services:
 
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana@sha256:121a7a9ece6dc10b969f1f96eed64b4f07dfac0d0b8abc070f7cb83bbde86f63
     ports:
       - "${GRAFANA_PORT}:3000"
 
@@ -11,6 +11,9 @@ services:
 
     volumes:
       - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
 
     restart: unless-stopped
 
@@ -18,7 +21,7 @@ services:
       - observability
 
   node-exporter:
-    image: prom/node-exporter:latest
+    image: prom/node-exporter@sha256:9b0ade5e607f9dbedb0a8e11151b6011ae5bd79304c261804cfdd2cadf200a80
     
     command:
       - '--path.procfs=/host/proc'
@@ -39,7 +42,7 @@ services:
       - observability
 
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus@sha256:3c42b892cf723fa54d2f262c37a0e1f80aa8c8ddb1da7b9b0df9455a35a7f893
 
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
@@ -58,7 +61,7 @@ services:
       - observability
 
   loki:
-    image: grafana/loki:latest
+    image: grafana/loki@sha256:87f0a067673756a3cede1bcbf0c74875f7df9b09fddb53e399d0c576f756cfcc
 
     command:
       - "-config.file=/etc/loki/config.yaml"
@@ -83,8 +86,6 @@ services:
  
     volumes:
       - ./collector/gateway:/etc/otelcol:ro
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
-      - /var/run/docker.sock:/var/run/docker.sock
 
     ports:
       - "4317:4317"
@@ -96,7 +97,7 @@ services:
       - observability
 
   tempo:
-    image: grafana/tempo:latest
+    image: grafana/tempo@sha256:1ce31d6d7ffab62189685e8c47881d4a561c5d38bd0dbd66e40ca83cef07923d
 
     command:
       - "-config.file=/etc/tempo/config.yaml"

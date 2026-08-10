@@ -1,0 +1,14 @@
+{
+  "signals": [
+    "logs",
+    "traces",
+    "metrics"
+  ],
+  "collector": [
+    "receiver:otlp"
+  ],
+  "compose": [
+    "ports:otlp"
+  ],
+  "requires": []
+}

@@ -1,0 +1,36 @@
+extensions:
+  docker_observer: ${file:/etc/otelcol/config/extensions/docker-observer.yaml}
+  file_storage/offsets:
+    directory: /var/lib/otelcol/offsets
+    create_directory: true
+  file_storage/queue:
+    directory: /var/lib/otelcol/queue
+    create_directory: true
+
+receivers:
+  receiver_creator/docker: ${file:/etc/otelcol/config/receivers/docker.yaml}
+  file_log/application: ${file:/etc/otelcol/config/receivers/filelog.yaml}
+  otlp: ${file:/etc/otelcol/config/receivers/otlp.yaml}
+
+processors:
+  resource/host: ${file:/etc/otelcol/config/processors/resource.yaml}
+  batch: ${file:/etc/otelcol/config/processors/batch.yaml}
+
+exporters:
+  otlp_grpc/gateway: ${file:/etc/otelcol/config/exporters/gateway.yaml}
+
+service:
+  extensions: [docker_observer, file_storage/offsets, file_storage/queue]
+  pipelines:
+    logs:
+      receivers: [receiver_creator/docker, file_log/application, otlp]
+      processors: [resource/host, batch]
+      exporters: [otlp_grpc/gateway]
+    traces:
+      receivers: [otlp]
+      processors: [resource/host, batch]
+      exporters: [otlp_grpc/gateway]
+    metrics:
+      receivers: [otlp]
+      processors: [resource/host, batch]
+      exporters: [otlp_grpc/gateway]

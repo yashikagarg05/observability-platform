@@ -1,0 +1,15 @@
+{
+  "signals": [
+    "logs"
+  ],
+  "collector": [
+    "receiver:file_log/application",
+    "extension:file_storage/offsets"
+  ],
+  "compose": [
+    "mount:application-log-directory",
+    "env:APP_LOG_HOST_PATH",
+    "env:OTEL_SERVICE_NAME"
+  ],
+  "requires": []
+}

@@ -1,0 +1,8 @@
+{
+  "name": "docker-file",
+  "capabilities": [
+    "otlp",
+    "docker",
+    "filelog"
+  ]
+}

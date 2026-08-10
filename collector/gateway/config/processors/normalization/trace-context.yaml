@@ -1,0 +1,16 @@
+error_mode: ignore
+log_statements:
+  - context: log
+    statements:
+      - set(log.trace_id.string, log.attributes["trace_id"]) where IsString(log.attributes["trace_id"]) and IsMatch(log.attributes["trace_id"], "^[0-9a-fA-F]{32}$")
+      - set(log.trace_id.string, log.attributes["traceId"]) where IsString(log.attributes["traceId"]) and IsMatch(log.attributes["traceId"], "^[0-9a-fA-F]{32}$")
+      - set(log.trace_id.string, log.attributes["TraceId"]) where IsString(log.attributes["TraceId"]) and IsMatch(log.attributes["TraceId"], "^[0-9a-fA-F]{32}$")
+      - set(log.span_id.string, log.attributes["span_id"]) where IsString(log.attributes["span_id"]) and IsMatch(log.attributes["span_id"], "^[0-9a-fA-F]{16}$")
+      - set(log.span_id.string, log.attributes["spanId"]) where IsString(log.attributes["spanId"]) and IsMatch(log.attributes["spanId"], "^[0-9a-fA-F]{16}$")
+      - set(log.span_id.string, log.attributes["SpanId"]) where IsString(log.attributes["SpanId"]) and IsMatch(log.attributes["SpanId"], "^[0-9a-fA-F]{16}$")
+      - delete_key(log.attributes, "trace_id") where IsString(log.attributes["trace_id"]) and IsMatch(log.attributes["trace_id"], "^[0-9a-fA-F]{32}$")
+      - delete_key(log.attributes, "traceId") where IsString(log.attributes["traceId"]) and IsMatch(log.attributes["traceId"], "^[0-9a-fA-F]{32}$")
+      - delete_key(log.attributes, "TraceId") where IsString(log.attributes["TraceId"]) and IsMatch(log.attributes["TraceId"], "^[0-9a-fA-F]{32}$")
+      - delete_key(log.attributes, "span_id") where IsString(log.attributes["span_id"]) and IsMatch(log.attributes["span_id"], "^[0-9a-fA-F]{16}$")
+      - delete_key(log.attributes, "spanId") where IsString(log.attributes["spanId"]) and IsMatch(log.attributes["spanId"], "^[0-9a-fA-F]{16}$")
+      - delete_key(log.attributes, "SpanId") where IsString(log.attributes["SpanId"]) and IsMatch(log.attributes["SpanId"], "^[0-9a-fA-F]{16}$")

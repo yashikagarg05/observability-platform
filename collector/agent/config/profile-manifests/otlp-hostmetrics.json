@@ -1,0 +1,7 @@
+{
+  "name": "otlp-hostmetrics",
+  "capabilities": [
+    "otlp",
+    "hostmetrics"
+  ]
+}

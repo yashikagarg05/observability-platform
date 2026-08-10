@@ -1,0 +1,7 @@
+endpoint: ${env:GATEWAY_OTLP_GRPC_ENDPOINT}
+tls:
+  insecure: true
+sending_queue:
+  storage: file_storage/queue
+retry_on_failure:
+  max_elapsed_time: 0s

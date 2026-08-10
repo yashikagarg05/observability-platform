@@ -1,0 +1,8 @@
+{
+  "name": "docker-hostmetrics",
+  "capabilities": [
+    "otlp",
+    "docker",
+    "hostmetrics"
+  ]
+}

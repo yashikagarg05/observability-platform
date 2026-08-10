@@ -1,0 +1,6 @@
+endpoint: unix:///var/run/docker.sock
+timeout: 5s
+cache_sync_interval: 1m
+include_all_containers: true
+excluded_images:
+  - otel/opentelemetry-collector-contrib:0.156.0

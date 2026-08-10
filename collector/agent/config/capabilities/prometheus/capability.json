@@ -1,0 +1,12 @@
+{
+  "signals": [
+    "metrics"
+  ],
+  "collector": [
+    "receiver:prometheus"
+  ],
+  "compose": [
+    "prometheus-target-config"
+  ],
+  "requires": []
+}

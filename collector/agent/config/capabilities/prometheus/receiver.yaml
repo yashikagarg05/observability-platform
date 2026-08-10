@@ -1,0 +1,4 @@
+config:
+  global:
+    scrape_interval: 60s
+  scrape_configs: []

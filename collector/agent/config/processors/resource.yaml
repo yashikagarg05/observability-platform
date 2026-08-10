@@ -1,0 +1,10 @@
+attributes:
+  - key: host.name
+    action: upsert
+    value: ${env:AGENT_HOST_NAME}
+  - key: service.namespace
+    action: upsert
+    value: ${env:OTEL_SERVICE_NAMESPACE}
+  - key: deployment.environment
+    action: upsert
+    value: ${env:OTEL_DEPLOYMENT_ENVIRONMENT}

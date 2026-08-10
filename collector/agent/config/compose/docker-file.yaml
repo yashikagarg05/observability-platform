@@ -1,0 +1,10 @@
+services:
+  otel-node-agent:
+    command: ["--config=/etc/otelcol/config/generated/docker-file.yaml"]
+    environment:
+      APP_LOG_GLOB: ${APP_LOG_GLOB:-*.log}
+      OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:?set the file-log fallback service name}
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ${APP_LOG_HOST_PATH:?set the host application log directory}:/var/log/application:ro

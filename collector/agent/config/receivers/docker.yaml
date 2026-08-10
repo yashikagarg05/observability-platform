@@ -1,0 +1,23 @@
+watch_observers: [docker_observer]
+receivers:
+  file_log/docker:
+    rule: type == "container" && port == 0
+    resource_attributes:
+      container.id: '`container_id`'
+      container.name: '`name`'
+      container.image.name: '`image`'
+    config:
+      include:
+        - /var/lib/docker/containers/`container_id`/`container_id`-json.log
+      start_at: end
+      storage: file_storage/offsets
+      operators:
+        - id: unwrap_docker_envelope
+          type: container
+          format: docker
+          add_metadata_from_filepath: false
+          output: identify_source
+        - id: identify_source
+          type: add
+          field: attributes.log.source.type
+          value: docker

@@ -1,0 +1,14 @@
+{
+  "signals": [
+    "metrics"
+  ],
+  "collector": [
+    "receiver:hostmetrics"
+  ],
+  "compose": [
+    "mount:host-proc",
+    "mount:host-sys",
+    "mount:host-root"
+  ],
+  "requires": []
+}

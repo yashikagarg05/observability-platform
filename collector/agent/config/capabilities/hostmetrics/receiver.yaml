@@ -1,0 +1,53 @@
+collection_interval: 60s
+root_path: /hostfs
+scrapers:
+  cpu: {}
+  memory: {}
+  load: {}
+  paging: {}
+  disk:
+    exclude:
+      devices:
+        - ^loop[0-9]+$
+        - ^ram[0-9]+$
+        - ^zram[0-9]+$
+      match_type: regexp
+  filesystem:
+    exclude_mount_points:
+      mount_points:
+        - ^/(dev|proc|sys|run)($|/)
+        - ^/var/lib/(docker|containerd|kubelet)($|/)
+        - ^/snap($|/)
+      match_type: regexp
+    exclude_fs_types:
+      fs_types:
+        - autofs
+        - binfmt_misc
+        - bpf
+        - cgroup2
+        - configfs
+        - debugfs
+        - devpts
+        - devtmpfs
+        - fusectl
+        - hugetlbfs
+        - iso9660
+        - mqueue
+        - nsfs
+        - overlay
+        - proc
+        - pstore
+        - rpc_pipefs
+        - securityfs
+        - squashfs
+        - sysfs
+        - tracefs
+      match_type: strict
+  network:
+    exclude:
+      interfaces:
+        - ^lo$
+        - ^veth.*
+        - ^docker.*
+        - ^br-.*
+      match_type: regexp

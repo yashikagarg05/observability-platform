@@ -1,30 +1,24 @@
 receivers:
-  otlp: ${file:/etc/otelcol/ingestion/otlp.yaml}
-  receiver_creator/docker_logs: ${file:/etc/otelcol/ingestion/docker-stdout.yaml}
-  file_log/local: ${file:/etc/otelcol/ingestion/file-logs.yaml}
+  otlp: ${file:/etc/otelcol/config/receivers/otlp.yaml}
 
 processors:
-  transform/normalize_json: ${file:/etc/otelcol/normalization/structured-json.yaml}
-  transform/normalize_serilog: ${file:/etc/otelcol/normalization/serilog-json.yaml}
-  transform/timestamp: ${file:/etc/otelcol/normalization/timestamp.yaml}
-  transform/severity: ${file:/etc/otelcol/normalization/severity.yaml}
-  transform/service_identity: ${file:/etc/otelcol/enrichment/service-identity.yaml}
-  transform/resource_identity: ${file:/etc/otelcol/enrichment/resource-identity.yaml}
-  transform/source_provenance: ${file:/etc/otelcol/enrichment/source-provenance.yaml}
-  batch: ${file:/etc/otelcol/routing/batch.yaml}
+  transform/normalize_json: ${file:/etc/otelcol/config/processors/normalization/structured-json.yaml}
+  transform/normalize_serilog: ${file:/etc/otelcol/config/processors/normalization/serilog-json.yaml}
+  transform/trace_context: ${file:/etc/otelcol/config/processors/normalization/trace-context.yaml}
+  transform/timestamp: ${file:/etc/otelcol/config/processors/normalization/timestamp.yaml}
+  transform/severity: ${file:/etc/otelcol/config/processors/normalization/severity.yaml}
+  transform/service_identity: ${file:/etc/otelcol/config/processors/enrichment/service-identity.yaml}
+  transform/resource_identity: ${file:/etc/otelcol/config/processors/enrichment/resource-identity.yaml}
+  transform/source_provenance: ${file:/etc/otelcol/config/processors/enrichment/source-provenance.yaml}
+  batch: ${file:/etc/otelcol/config/processors/batch.yaml}
 
 exporters:
-  otlp_grpc/tempo: ${file:/etc/otelcol/routing/tempo.yaml}
-  otlp_http/loki: ${file:/etc/otelcol/routing/loki.yaml}
-  prometheus: ${file:/etc/otelcol/routing/prometheus.yaml}
-
-extensions:
-  docker_observer: ${file:/etc/otelcol/ingestion/docker-observer.yaml}
+  otlp_grpc/tempo: ${file:/etc/otelcol/config/exporters/tempo.yaml}
+  otlp_http/loki: ${file:/etc/otelcol/config/exporters/loki.yaml}
+  prometheus: ${file:/etc/otelcol/config/exporters/prometheus.yaml}
 
 service:
-  extensions:
-    - docker_observer
   pipelines:
-    logs: ${file:/etc/otelcol/service/logs.yaml}
-    traces: ${file:/etc/otelcol/service/traces.yaml}
-    metrics: ${file:/etc/otelcol/service/metrics.yaml}
+    logs: ${file:/etc/otelcol/config/service/logs.yaml}
+    traces: ${file:/etc/otelcol/config/service/traces.yaml}
+    metrics: ${file:/etc/otelcol/config/service/metrics.yaml}

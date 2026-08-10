@@ -1,0 +1,15 @@
+{
+  "signals": [
+    "logs"
+  ],
+  "collector": [
+    "extension:docker_observer",
+    "receiver:receiver_creator/docker",
+    "extension:file_storage/offsets"
+  ],
+  "compose": [
+    "mount:docker-socket",
+    "mount:docker-containers"
+  ],
+  "requires": []
+}

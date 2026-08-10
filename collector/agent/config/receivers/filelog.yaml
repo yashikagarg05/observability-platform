@@ -1,0 +1,15 @@
+include:
+  - /var/log/application/${env:APP_LOG_GLOB}
+start_at: end
+storage: file_storage/offsets
+include_file_name: true
+include_file_path: true
+operators:
+  - id: identify_source
+    type: add
+    field: attributes.log.source.type
+    value: file
+  - id: set_file_service_name
+    type: add
+    field: resource["service.name"]
+    value: ${env:OTEL_SERVICE_NAME}

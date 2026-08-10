@@ -1,0 +1,3 @@
+file_storage/queue:
+  directory: /var/lib/otelcol/queue
+  create_directory: true
