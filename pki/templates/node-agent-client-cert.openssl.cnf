@@ -1,0 +1,26 @@
+[ req ]
+default_bits = 3072
+prompt = no
+distinguished_name = dn
+req_extensions = v3_node_agent_client_csr
+
+[ dn ]
+O = Observability Platform
+CN = node-agent-001
+
+[ v3_node_agent_client_csr ]
+basicConstraints = critical,CA:false
+keyUsage = critical,digitalSignature,keyEncipherment
+extendedKeyUsage = clientAuth
+subjectAltName = @agent_alt_names
+
+[ v3_node_agent_client ]
+basicConstraints = critical,CA:false
+keyUsage = critical,digitalSignature,keyEncipherment
+extendedKeyUsage = clientAuth
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid,issuer
+subjectAltName = @agent_alt_names
+
+[ agent_alt_names ]
+URI.1 = spiffe://observability.local/tenant/example-tenant/site/example-site/environment/production/agent/node-agent-001

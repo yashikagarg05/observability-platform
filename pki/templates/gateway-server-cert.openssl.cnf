@@ -1,0 +1,26 @@
+[ req ]
+default_bits = 3072
+prompt = no
+distinguished_name = dn
+req_extensions = v3_gateway_server_csr
+
+[ dn ]
+O = Observability Platform
+CN = otlp.example.com
+
+[ v3_gateway_server_csr ]
+basicConstraints = critical,CA:false
+keyUsage = critical,digitalSignature,keyEncipherment
+extendedKeyUsage = serverAuth
+subjectAltName = @gateway_alt_names
+
+[ v3_gateway_server ]
+basicConstraints = critical,CA:false
+keyUsage = critical,digitalSignature,keyEncipherment
+extendedKeyUsage = serverAuth
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid,issuer
+subjectAltName = @gateway_alt_names
+
+[ gateway_alt_names ]
+DNS.1 = otlp.example.com

@@ -1,0 +1,25 @@
+receivers:
+  otlp: ${file:/etc/otelcol/config/receivers/otlp.yaml}
+  otlp/mtls: ${file:/etc/otelcol/config/receivers/otlp-mtls.yaml}
+
+processors:
+  transform/normalize_json: ${file:/etc/otelcol/config/processors/normalization/structured-json.yaml}
+  transform/normalize_serilog: ${file:/etc/otelcol/config/processors/normalization/serilog-json.yaml}
+  transform/trace_context: ${file:/etc/otelcol/config/processors/normalization/trace-context.yaml}
+  transform/timestamp: ${file:/etc/otelcol/config/processors/normalization/timestamp.yaml}
+  transform/severity: ${file:/etc/otelcol/config/processors/normalization/severity.yaml}
+  transform/service_identity: ${file:/etc/otelcol/config/processors/enrichment/service-identity.yaml}
+  transform/resource_identity: ${file:/etc/otelcol/config/processors/enrichment/resource-identity.yaml}
+  transform/source_provenance: ${file:/etc/otelcol/config/processors/enrichment/source-provenance.yaml}
+  batch: ${file:/etc/otelcol/config/processors/batch.yaml}
+
+exporters:
+  otlp_grpc/tempo: ${file:/etc/otelcol/config/exporters/tempo.yaml}
+  otlp_http/loki: ${file:/etc/otelcol/config/exporters/loki.yaml}
+  prometheus: ${file:/etc/otelcol/config/exporters/prometheus.yaml}
+
+service:
+  pipelines:
+    logs: ${file:/etc/otelcol/config/service/logs-mtls.yaml}
+    traces: ${file:/etc/otelcol/config/service/traces-mtls.yaml}
+    metrics: ${file:/etc/otelcol/config/service/metrics-mtls.yaml}

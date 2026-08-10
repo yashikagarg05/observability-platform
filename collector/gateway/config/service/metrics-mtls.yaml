@@ -1,0 +1,7 @@
+receivers:
+  - otlp
+  - otlp/mtls
+processors:
+  - batch
+exporters:
+  - prometheus

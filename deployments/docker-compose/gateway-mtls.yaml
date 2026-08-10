@@ -1,0 +1,13 @@
+services:
+  otel-collector:
+    command:
+      - "--config=/etc/otelcol/config-mtls.yaml"
+    environment:
+      GATEWAY_TLS_CERT_FILE: ${GATEWAY_TLS_CERT_FILE:-/tls/certs/gateway.crt}
+      GATEWAY_TLS_KEY_FILE: ${GATEWAY_TLS_KEY_FILE:-/tls/secrets/gateway.key}
+      GATEWAY_CLIENT_CA_FILE: ${GATEWAY_CLIENT_CA_FILE:-/tls/certs/agent-ca-bundle.pem}
+    volumes:
+      - ${GATEWAY_CERTS_HOST_PATH:?set the host directory containing gateway.crt and agent-ca-bundle.pem}:/tls/certs:ro
+      - ${GATEWAY_SECRETS_HOST_PATH:?set the host directory containing gateway.key}:/tls/secrets:ro
+    ports:
+      - "${GATEWAY_OTLP_MTLS_GRPC_PORT:-4319}:4319"

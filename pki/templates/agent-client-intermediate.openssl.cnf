@@ -1,0 +1,14 @@
+[ req ]
+default_bits = 4096
+prompt = no
+distinguished_name = dn
+
+[ dn ]
+O = Observability Platform
+CN = Observability Agent Client Intermediate CA
+
+[ v3_agent_client_intermediate_ca ]
+basicConstraints = critical,CA:true,pathlen:0
+keyUsage = critical,keyCertSign,cRLSign
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid,issuer

@@ -1,0 +1,9 @@
+services:
+  otel-node-agent:
+    environment:
+      NODE_AGENT_TLS_CA_FILE: ${NODE_AGENT_TLS_CA_FILE:-/tls/certs/ca-bundle.pem}
+      NODE_AGENT_TLS_CERT_FILE: ${NODE_AGENT_TLS_CERT_FILE:-/tls/certs/client.crt}
+      NODE_AGENT_TLS_KEY_FILE: ${NODE_AGENT_TLS_KEY_FILE:-/tls/secrets/client.key}
+    volumes:
+      - ${NODE_AGENT_CERTS_HOST_PATH:?set the host directory containing ca-bundle.pem and client.crt}:/tls/certs:ro
+      - ${NODE_AGENT_SECRETS_HOST_PATH:?set the host directory containing client.key}:/tls/secrets:ro

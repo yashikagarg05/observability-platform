@@ -1,0 +1,9 @@
+endpoint: ${env:GATEWAY_OTLP_GRPC_ENDPOINT}
+tls:
+  ca_file: ${env:NODE_AGENT_TLS_CA_FILE}
+  cert_file: ${env:NODE_AGENT_TLS_CERT_FILE}
+  key_file: ${env:NODE_AGENT_TLS_KEY_FILE}
+sending_queue:
+  storage: file_storage/queue
+retry_on_failure:
+  max_elapsed_time: 0s
