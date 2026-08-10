@@ -1,0 +1,97 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "panels": [
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []},
+      "gridPos": {"h": 6, "w": 6, "x": 0, "y": 0},
+      "id": 1,
+      "targets": [{"expr": "up", "refId": "A"}],
+      "title": "Platform scrape health",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "ops"}, "overrides": []},
+      "gridPos": {"h": 6, "w": 6, "x": 6, "y": 0},
+      "id": 2,
+      "targets": [{"expr": "sum by (otelcol_receiver, otelcol_signal) (rate(otelcol_receiver_accepted_log_records[5m])) or vector(0)", "refId": "A"}],
+      "title": "Gateway accepted logs",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "ops"}, "overrides": []},
+      "gridPos": {"h": 6, "w": 6, "x": 12, "y": 0},
+      "id": 3,
+      "targets": [{"expr": "sum by (otelcol_exporter, otelcol_signal) (rate(otelcol_exporter_sent_log_records[5m])) or vector(0)", "refId": "A"}],
+      "title": "Gateway exported logs",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "ops"}, "overrides": []},
+      "gridPos": {"h": 6, "w": 6, "x": 18, "y": 0},
+      "id": 4,
+      "targets": [{"expr": "sum by (otelcol_exporter, otelcol_signal) (rate(otelcol_exporter_send_failed_log_records[5m])) or vector(0)", "refId": "A"}],
+      "title": "Gateway export failures",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []},
+      "gridPos": {"h": 6, "w": 8, "x": 0, "y": 6},
+      "id": 5,
+      "targets": [{"expr": "sum by (otelcol_exporter) (otelcol_exporter_queue_size) or vector(0)", "refId": "A"}],
+      "title": "Gateway exporter queue size",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "bytes"}, "overrides": []},
+      "gridPos": {"h": 6, "w": 8, "x": 8, "y": 6},
+      "id": 6,
+      "targets": [{"expr": "process_resident_memory_bytes{job=~\"gateway-self|loki|tempo|prometheus\"}", "refId": "A"}],
+      "title": "Platform process memory",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "percentunit"}, "overrides": []},
+      "gridPos": {"h": 6, "w": 8, "x": 16, "y": 6},
+      "id": 7,
+      "targets": [{"expr": "rate(process_cpu_seconds_total{job=~\"gateway-self|loki|tempo|prometheus\"}[5m])", "refId": "A"}],
+      "title": "Platform process CPU",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "ops"}, "overrides": []},
+      "gridPos": {"h": 7, "w": 12, "x": 0, "y": 12},
+      "id": 8,
+      "targets": [{"expr": "sum by (otelcol_receiver, otelcol_signal) (rate(otelcol_receiver_refused_log_records[5m])) or vector(0)", "refId": "A"}],
+      "title": "Gateway refused or dropped logs",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []},
+      "gridPos": {"h": 7, "w": 12, "x": 12, "y": 12},
+      "id": 9,
+      "targets": [{"expr": "otelcol_processor_batch_batch_send_size_count or vector(0)", "refId": "A"}],
+      "title": "Gateway batch activity",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 41,
+  "tags": ["observability-platform", "production", "self-monitoring"],
+  "time": {"from": "now-1h", "to": "now"},
+  "timezone": "browser",
+  "title": "Platform Self-Monitoring",
+  "uid": "platform-self-monitoring",
+  "version": 1
+}

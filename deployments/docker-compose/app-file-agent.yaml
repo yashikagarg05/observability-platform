@@ -1,0 +1,25 @@
+services:
+  otel-node-agent:
+    image: otel/opentelemetry-collector-contrib:0.156.0
+    user: "0:0"
+    command: ["--config=/etc/otelcol/config/config.yaml"]
+    environment:
+      GATEWAY_OTLP_GRPC_ENDPOINT: ${GATEWAY_OTLP_GRPC_ENDPOINT:?set the gateway host and port}
+      AGENT_HOST_NAME: ${AGENT_HOST_NAME:?set the agent host name}
+      APP_LOG_GLOB: ${APP_LOG_GLOB:-application.log}
+      OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-application}
+      OTEL_SERVICE_NAMESPACE: ${OTEL_SERVICE_NAMESPACE:-default}
+      OTEL_DEPLOYMENT_ENVIRONMENT: ${OTEL_DEPLOYMENT_ENVIRONMENT:-production}
+    volumes:
+      - ../../collector/agent/config:/etc/otelcol/config:ro
+      - app-logs:/var/log/application:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - otel-node-agent-state:/var/lib/otelcol
+    restart: unless-stopped
+
+volumes:
+  app-logs:
+    external: true
+    name: ${APP_LOG_VOLUME:?set the application log Docker volume}
+  otel-node-agent-state:

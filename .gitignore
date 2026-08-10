@@ -12,6 +12,7 @@ node_modules/
 .tmp/
 *.tsbuildinfo
 frontend/vite.config.js
+frontend/vite.config.d.ts
 
 # Local backups and generated certificate/key material
 backups/

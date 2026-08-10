@@ -1,6 +1,6 @@
 services:
   otel-node-agent:
-    command: ["--config=/etc/otelcol/config/generated/otlp.yaml"]
+    command: ["--config=/etc/otelcol/config/generated/otlp${NODE_AGENT_TRANSPORT_SUFFIX:-}.yaml"]
     ports:
       - "${NODE_AGENT_OTLP_GRPC_PORT:-4317}:4317"
       - "${NODE_AGENT_OTLP_HTTP_PORT:-4318}:4318"
