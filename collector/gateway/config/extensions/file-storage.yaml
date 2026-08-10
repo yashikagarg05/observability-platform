@@ -1,0 +1,2 @@
+directory: /var/lib/otelcol/gateway-queue
+create_directory: true

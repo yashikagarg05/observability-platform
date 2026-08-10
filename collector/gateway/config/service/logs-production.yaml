@@ -1,0 +1,16 @@
+receivers:
+  - otlp
+  - otlp/mtls
+processors:
+  - memory_limiter
+  - transform/normalize_json
+  - transform/normalize_serilog
+  - transform/trace_context
+  - transform/timestamp
+  - transform/severity
+  - transform/service_identity
+  - transform/resource_identity
+  - transform/source_provenance
+  - batch
+exporters:
+  - otlp_http/loki

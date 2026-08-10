@@ -1,0 +1,41 @@
+extensions:
+  health_check: ${file:/etc/otelcol/config/extensions/health-check.yaml}
+  file_storage/gateway: ${file:/etc/otelcol/config/extensions/file-storage.yaml}
+
+receivers:
+  otlp: ${file:/etc/otelcol/config/receivers/otlp.yaml}
+  otlp/mtls: ${file:/etc/otelcol/config/receivers/otlp-mtls.yaml}
+
+processors:
+  memory_limiter: ${file:/etc/otelcol/config/processors/memory-limiter.yaml}
+  transform/normalize_json: ${file:/etc/otelcol/config/processors/normalization/structured-json.yaml}
+  transform/normalize_serilog: ${file:/etc/otelcol/config/processors/normalization/serilog-json.yaml}
+  transform/trace_context: ${file:/etc/otelcol/config/processors/normalization/trace-context.yaml}
+  transform/timestamp: ${file:/etc/otelcol/config/processors/normalization/timestamp.yaml}
+  transform/severity: ${file:/etc/otelcol/config/processors/normalization/severity.yaml}
+  transform/service_identity: ${file:/etc/otelcol/config/processors/enrichment/service-identity.yaml}
+  transform/resource_identity: ${file:/etc/otelcol/config/processors/enrichment/resource-identity.yaml}
+  transform/source_provenance: ${file:/etc/otelcol/config/processors/enrichment/source-provenance.yaml}
+  batch: ${file:/etc/otelcol/config/processors/batch.yaml}
+
+exporters:
+  otlp_grpc/tempo: ${file:/etc/otelcol/config/exporters/tempo-production.yaml}
+  otlp_http/loki: ${file:/etc/otelcol/config/exporters/loki-production.yaml}
+  prometheus: ${file:/etc/otelcol/config/exporters/prometheus.yaml}
+
+service:
+  extensions:
+    - health_check
+    - file_storage/gateway
+  telemetry:
+    metrics:
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: 0.0.0.0
+                port: 8888
+  pipelines:
+    logs: ${file:/etc/otelcol/config/service/logs-production.yaml}
+    traces: ${file:/etc/otelcol/config/service/traces-production.yaml}
+    metrics: ${file:/etc/otelcol/config/service/metrics-production.yaml}

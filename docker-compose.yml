@@ -88,8 +88,8 @@ services:
       - ./collector/gateway:/etc/otelcol:ro
 
     ports:
-      - "4317:4317"
-      - "4318:4318"
+      - "${GATEWAY_OTLP_GRPC_PORT:-4317}:4317"
+      - "${GATEWAY_OTLP_HTTP_PORT:-4318}:4318"
 
     restart: unless-stopped
 

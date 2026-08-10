@@ -1,0 +1,10 @@
+endpoint: http://loki:3100/otlp
+sending_queue:
+  storage: file_storage/gateway
+  num_consumers: 4
+  queue_size: ${env:GATEWAY_LOG_QUEUE_SIZE}
+retry_on_failure:
+  enabled: true
+  initial_interval: 5s
+  max_interval: 30s
+  max_elapsed_time: 0s

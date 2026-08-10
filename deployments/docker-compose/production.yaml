@@ -1,0 +1,149 @@
+services:
+  grafana:
+    mem_limit: 512m
+    cpus: 0.50
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  prometheus:
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=${PROMETHEUS_RETENTION_TIME:-15d}"
+      - "--storage.tsdb.retention.size=${PROMETHEUS_RETENTION_SIZE:-20GB}"
+      - "--web.enable-lifecycle"
+    mem_limit: 1g
+    cpus: 1.00
+    volumes:
+      - ./deployments/production/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9090/-/healthy >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  loki:
+    volumes:
+      - ./deployments/production/loki.yaml:/etc/loki/config.yaml:ro
+      - loki-data:/loki
+    mem_limit: 1g
+    cpus: 1.00
+    healthcheck:
+      test: ["CMD", "/usr/bin/loki", "-version"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  tempo:
+    command:
+      - "-config.file=/etc/tempo/config.yaml"
+      - "-target=all"
+      - "-backend-worker.compaction.block-retention=${TRACE_RETENTION_HOURS:-168}h"
+      - "-backend-scheduler.provider.work.compaction.block-retention=${TRACE_RETENTION_HOURS:-168}h"
+    volumes:
+      - ./deployments/production/tempo.yaml:/etc/tempo/config.yaml:ro
+      - tempo-data:/var/tempo
+    mem_limit: 1g
+    cpus: 1.00
+    healthcheck:
+      test: ["CMD", "/tempo", "-version"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  otel-collector:
+    command:
+      - "--config=/etc/otelcol/config-production.yaml"
+    environment:
+      GATEWAY_TLS_CERT_FILE: ${GATEWAY_TLS_CERT_FILE:-/tls/certs/gateway.crt}
+      GATEWAY_TLS_KEY_FILE: ${GATEWAY_TLS_KEY_FILE:-/tls/secrets/gateway.key}
+      GATEWAY_CLIENT_CA_FILE: ${GATEWAY_CLIENT_CA_FILE:-/tls/certs/agent-ca-bundle.pem}
+      GATEWAY_MEMORY_LIMIT_MIB: ${GATEWAY_MEMORY_LIMIT_MIB:-768}
+      GATEWAY_MEMORY_SPIKE_LIMIT_MIB: ${GATEWAY_MEMORY_SPIKE_LIMIT_MIB:-192}
+      GATEWAY_LOG_QUEUE_SIZE: ${GATEWAY_LOG_QUEUE_SIZE:-10000}
+      GATEWAY_TRACE_QUEUE_SIZE: ${GATEWAY_TRACE_QUEUE_SIZE:-10000}
+    volumes:
+      - ./collector/gateway:/etc/otelcol:ro
+      - ${GATEWAY_CERTS_HOST_PATH:?set GATEWAY_CERTS_HOST_PATH}:/tls/certs:ro
+      - ${GATEWAY_SECRETS_HOST_PATH:?set GATEWAY_SECRETS_HOST_PATH}:/tls/secrets:ro
+      - gateway-queue-data:/var/lib/otelcol
+    ports:
+      - "${GATEWAY_OTLP_GRPC_PORT:-4317}:4317"
+      - "${GATEWAY_OTLP_HTTP_PORT:-4318}:4318"
+      - "${GATEWAY_OTLP_MTLS_GRPC_PORT:-4319}:4319"
+      - "127.0.0.1:${GATEWAY_HEALTH_PORT:-13133}:13133"
+    mem_limit: 1g
+    cpus: 1.00
+    healthcheck:
+      test: ["CMD", "/otelcol-contrib", "--version"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  control-plane-api:
+    image: python:3.12.11-slim-bookworm
+    working_dir: /app
+    command: ["python", "services/enrollment/enrollment_api.py"]
+    environment:
+      ENROLLMENT_CREDENTIALS_FILE: ${ENROLLMENT_CREDENTIALS_FILE:-/var/lib/observability-platform/control-plane/enrollment-credentials.json}
+      ENROLLMENT_REGISTRY_FILE: ${ENROLLMENT_REGISTRY_FILE:-/var/lib/observability-platform/control-plane/agent-registry.json}
+      ENROLLMENT_AUDIT_LOG: ${ENROLLMENT_AUDIT_LOG:-/var/lib/observability-platform/control-plane/audit.log}
+      ENROLLMENT_ISSUER_MODE: ${ENROLLMENT_ISSUER_MODE:?set ENROLLMENT_ISSUER_MODE}
+      ENROLLMENT_PRODUCTION_ISSUER_COMMAND: ${ENROLLMENT_PRODUCTION_ISSUER_COMMAND:-}
+      ENROLLMENT_PRODUCTION_ISSUER_CA_BUNDLE: ${ENROLLMENT_PRODUCTION_ISSUER_CA_BUNDLE:-/tls/enrollment/agent-ca-bundle.pem}
+      ENROLLMENT_ALLOW_DEVELOPMENT_ISSUER: ${ENROLLMENT_ALLOW_DEVELOPMENT_ISSUER:-false}
+      ENROLLMENT_DEVELOPMENT_AGENT_CA_CERT: ${ENROLLMENT_DEVELOPMENT_AGENT_CA_CERT:-/tls/enrollment/agent-ca.pem}
+      ENROLLMENT_DEVELOPMENT_AGENT_CA_KEY: ${ENROLLMENT_DEVELOPMENT_AGENT_CA_KEY:-/tls/enrollment/agent-ca.key}
+      ENROLLMENT_DEVELOPMENT_AGENT_CA_BUNDLE: ${ENROLLMENT_DEVELOPMENT_AGENT_CA_BUNDLE:-/tls/enrollment/agent-ca-bundle.pem}
+      ENROLLMENT_GATEWAY_CA_BUNDLE: ${ENROLLMENT_GATEWAY_CA_BUNDLE:-/tls/enrollment/gateway-ca-bundle.pem}
+      ENROLLMENT_AGENT_CERT_DAYS: ${ENROLLMENT_AGENT_CERT_DAYS:-60}
+      CONTROL_PLANE_TENANT_ID: ${CONTROL_PLANE_TENANT_ID:?set CONTROL_PLANE_TENANT_ID}
+      CONTROL_PLANE_OPERATOR_TOKEN: ${CONTROL_PLANE_OPERATOR_TOKEN:?set CONTROL_PLANE_OPERATOR_TOKEN}
+      PUBLIC_ENROLLMENT_ENDPOINT: ${PUBLIC_ENROLLMENT_ENDPOINT:-http://localhost:8080}
+      PROMETHEUS_URL: ${PROMETHEUS_URL:-http://prometheus:9090}
+      GRAFANA_URL: ${GRAFANA_URL:-http://localhost:3000}
+      FRONTEND_CORS_ORIGIN: ${FRONTEND_CORS_ORIGIN:-http://localhost:4173}
+    volumes:
+      - ./:/app:ro
+      - control-plane-data:/var/lib/observability-platform/control-plane
+      - ${ENROLLMENT_PKI_HOST_PATH:?set ENROLLMENT_PKI_HOST_PATH}:/tls/enrollment:ro
+    ports:
+      - "${CONTROL_PLANE_PORT:-8080}:8080"
+    restart: unless-stopped
+    mem_limit: 256m
+    cpus: 0.25
+    healthcheck:
+      test: ["CMD-SHELL", "python - <<'PY'\nimport urllib.request\nurllib.request.urlopen('http://localhost:8080/healthz', timeout=5)\nPY"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - observability
+
+  platform-ui:
+    image: node:24-alpine@sha256:d32cdf619f63fe0471182d08996dd516c6275bb5fd31ae06e55a570bd9e1ad43
+    working_dir: /app
+    command: ["sh", "-c", "npm ci && VITE_API_BASE_URL=${PUBLIC_CONTROL_PLANE_API_URL:-http://localhost:8080} npm run build && npm run preview -- --host 0.0.0.0 --port 4173"]
+    volumes:
+      - ./frontend:/app
+    ports:
+      - "${PLATFORM_UI_PORT:-4173}:4173"
+    restart: unless-stopped
+    mem_limit: 512m
+    cpus: 0.50
+    networks:
+      - observability
+
+volumes:
+  gateway-queue-data:
+  control-plane-data:

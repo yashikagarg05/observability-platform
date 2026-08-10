@@ -1,0 +1,3 @@
+check_interval: 1s
+limit_mib: ${env:GATEWAY_MEMORY_LIMIT_MIB}
+spike_limit_mib: ${env:GATEWAY_MEMORY_SPIKE_LIMIT_MIB}
