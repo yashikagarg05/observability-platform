@@ -24,6 +24,7 @@ cp "$root/collector/agent/compose.yaml" "$stage/$name/compose.yaml"
 cp "$root/collector/agent/.env.example" "$stage/$name/.env.example"
 cp "$root/collector/agent/README.md" "$stage/$name/README.md"
 cp -R "$root/collector/agent/config" "$stage/$name/config"
+cp -R "$root/collector/agent/bin" "$stage/$name/bin"
 
 tar -C "$stage" -czf "$stage/$name.tgz" "$name"
 (

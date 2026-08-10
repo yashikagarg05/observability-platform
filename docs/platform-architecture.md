@@ -8,7 +8,9 @@ The Node Agent package is ready for staged deployment. Existing gateway-local Do
 
 ## Node Agent
 
-`collector/agent` is the future single source-host deployment. It collects local Docker stdout, explicitly mounted files, and local OTLP telemetry, then exports OTLP/gRPC only to the gateway. It contains no backend configuration. Its hostmetrics and Prometheus modules are packaged but inactive, preserving the current Node Exporter to Prometheus path.
+`collector/agent` is the future single source-host deployment. It collects local Docker stdout, explicitly mounted files, local OTLP telemetry, and optional hostmetrics, then exports OTLP/gRPC only to the gateway. It contains no backend configuration. Its Prometheus receiver module is packaged but inactive, preserving backend routing ownership in the gateway.
+
+The current plaintext OTLP/gRPC transport remains available for migration. mTLS is implemented as an opt-in transport variant using generated `-mtls` Node Agent configs and the Gateway `config-mtls.yaml` migration listener; it does not change source capabilities or backend routing.
 
 ## Gateway
 

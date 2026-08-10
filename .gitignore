@@ -8,6 +8,21 @@
 data/
 state/
 dist/
+node_modules/
+.tmp/
+*.tsbuildinfo
+frontend/vite.config.js
+
+# Local backups and generated certificate/key material
+backups/
+dev-mtls/
+*.key
+*.pem
+*.crt
+*.csr
+*.srl
+*.p12
+*.pfx
 
 # Editor and operating-system files
 .DS_Store
