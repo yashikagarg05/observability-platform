@@ -1,0 +1,65 @@
+services:
+  app-node-agent:
+    image: otel/opentelemetry-collector-contrib:0.156.0
+    user: "0:0"
+    command: ["--config=/etc/otelcol/config/generated/otlp-hostmetrics-mtls.yaml"]
+    environment:
+      GATEWAY_OTLP_GRPC_ENDPOINT: otel-collector:4319
+      AGENT_HOST_NAME: app-observability-node
+      OTEL_SERVICE_NAMESPACE: demo
+      OTEL_DEPLOYMENT_ENVIRONMENT: development
+      NODE_AGENT_TLS_CA_FILE: /tls/certs/ca-bundle.pem
+      NODE_AGENT_TLS_CERT_FILE: /tls/certs/client.crt
+      NODE_AGENT_TLS_KEY_FILE: /tls/secrets/client.key
+    volumes:
+      - ../../collector/agent/config:/etc/otelcol/config:ro
+      - ${NODE_AGENT_CERTS_HOST_PATH:?set the host directory containing ca-bundle.pem and client.crt}:/tls/certs:ro
+      - ${NODE_AGENT_SECRETS_HOST_PATH:?set the host directory containing client.key}:/tls/secrets:ro
+      - /:/hostfs:ro
+      - app-node-agent-state:/var/lib/otelcol
+    networks:
+      - observability
+
+  orders-api:
+    build:
+      context: .
+    environment:
+      PORT: "8080"
+      SERVICE_NAME: orders-api
+      OTEL_SERVICE_NAME: orders-api
+      OTEL_SERVICE_NAMESPACE: demo
+      OTEL_DEPLOYMENT_ENVIRONMENT: development
+      OTEL_SERVICE_VERSION: 1.0.0
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://app-node-agent:4318
+      DOWNSTREAM_URL: http://payment-api:8081
+    ports:
+      - "${ORDERS_API_HOST_PORT:-18080}:8080"
+    depends_on:
+      - app-node-agent
+      - payment-api
+    networks:
+      - observability
+
+  payment-api:
+    build:
+      context: .
+    environment:
+      PORT: "8081"
+      SERVICE_NAME: payment-api
+      OTEL_SERVICE_NAME: payment-api
+      OTEL_SERVICE_NAMESPACE: demo
+      OTEL_DEPLOYMENT_ENVIRONMENT: development
+      OTEL_SERVICE_VERSION: 1.0.0
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://app-node-agent:4318
+    depends_on:
+      - app-node-agent
+    networks:
+      - observability
+
+networks:
+  observability:
+    name: ${OBSERVABILITY_NETWORK:-observability-platform_observability}
+    external: true
+
+volumes:
+  app-node-agent-state:
