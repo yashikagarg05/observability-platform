@@ -45,24 +45,33 @@ This lets applications emit standard OTLP while operators choose consistent coll
 
 ```mermaid
 flowchart LR
-  subgraph telemetryPath["Telemetry path"]
-    Applications["Applications"] -->|"OTLP"| NodeAgent["Node Agent"]
-    Infrastructure["Infrastructure sources\nDocker stdout, file logs, host metrics"] --> NodeAgent
-    NodeAgent -->|"OTLP; mTLS in the production-oriented profile"| Gateway["OpenTelemetry Gateway"]
-    Gateway -->|"logs"| Loki["Logs: Loki"]
-    Gateway -->|"traces"| Tempo["Traces: Tempo"]
-    Gateway -->|"exposes metrics"| Prometheus["Metrics: Prometheus"]
-    Loki --> Grafana["Grafana"]
-    Tempo --> Grafana
-    Prometheus --> Grafana
-  end
+    subgraph Sources["Telemetry Sources"]
+        APP["Applications"]
+        INFRA["Infrastructure"]
+    end
 
-  subgraph managementPath["Management and control path"]
-    Console["Platform Management Console"] --> ControlPlane["Control Plane API"]
-    ControlPlane --> Registry["Agent Registry and enrollment lifecycle"]
-    ControlPlane -.->|"enrollment and lifecycle workflows"| NodeAgent
-    Console -.->|"fleet status and Grafana deep-links"| Grafana
-  end
+    AGENT["Node Agent"]
+    GATEWAY["OpenTelemetry Gateway"]
+
+    subgraph Storage["Observability Backends"]
+        LOKI["Loki<br/>Logs"]
+        PROM["Prometheus<br/>Metrics"]
+        TEMPO["Tempo<br/>Traces"]
+    end
+
+    GRAFANA["Grafana<br/>Explore"]
+
+    APP -->|OTLP| AGENT
+    INFRA -->|Docker / Files / Host Metrics| AGENT
+    AGENT -->|OTLP| GATEWAY
+
+    GATEWAY -->|Logs| LOKI
+    GATEWAY -->|Metrics| PROM
+    GATEWAY -->|Traces| TEMPO
+
+    LOKI --> GRAFANA
+    PROM --> GRAFANA
+    TEMPO --> GRAFANA
 ```
 
 The architecture keeps collection, transport, processing, storage, and exploration separate:
