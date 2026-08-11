@@ -74,6 +74,22 @@ flowchart LR
     TEMPO --> GRAFANA
 ```
 
+## Management & Control Plane
+
+This answers: “How are agents managed?”
+
+```mermaid
+flowchart LR
+    CONSOLE["Platform Management Console"]
+    API["Control Plane API"]
+    REGISTRY["Agent Registry"]
+    AGENT["Node Agent"]
+
+    CONSOLE -->|Operator workflows| API
+    API -->|Enrollment & lifecycle| REGISTRY
+    REGISTRY -->|Credentials / status / lifecycle| AGENT
+```
+
 The architecture keeps collection, transport, processing, storage, and exploration separate:
 
 - **Node Agent:** local collector and OTLP endpoint for applications; it does not contain backend-specific configuration.
