@@ -1,90 +1,233 @@
 # Observability Platform
 
-An OpenTelemetry-native, self-hosted observability platform for teams that want centralized logs, metrics, and traces without sending telemetry to a proprietary SaaS.
+A self-hosted telemetry layer for applications and infrastructure.
 
-This repository provides a single-tenant Docker Compose deployment with:
+Collect logs, metrics, and traces through OpenTelemetry, centralize processing through a Gateway, and explore the resulting telemetry through Grafana.
 
-- Node Agent for local telemetry collection.
-- OTLP Gateway for centralized processing and routing.
-- Loki for logs.
-- Tempo for traces.
-- Prometheus for metrics.
-- Grafana as the primary observability UI.
-- Control Plane APIs for Node Agent enrollment, registry, and fleet status.
+[![OpenTelemetry](https://img.shields.io/badge/OpenTelemetry-based-5B21B6)](https://opentelemetry.io/)
+[![Docker Compose](https://img.shields.io/badge/Docker%20Compose-supported-2496ED)](https://docs.docker.com/compose/)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 
-Telemetry stays in the operator's infrastructure unless the operator configures external storage or forwarding outside this repository.
+**Collect → Process → Store → Explore**
+
+`Logs` · `Metrics` · `Traces` · `Agents` · `Gateway` · `Grafana`
+
+![Observability Platform architecture](docs/images/observability-platform-overview.svg)
+
+> A reusable telemetry layer that keeps applications decoupled from observability backends.
+
+[Architecture](#architecture) · [Quick Start](#quick-start) · [Capabilities](#capabilities) · [Documentation](#documentation)
+
+## What Is It?
+
+Observability Platform is a self-hosted, single-tenant Docker Compose profile for centralizing logs, metrics, and traces from applications and infrastructure. It separates local collection from centralized processing, storage, and exploration:
+
+- Applications emit OpenTelemetry Protocol (OTLP) telemetry to a local Node Agent.
+- Node Agents collect Docker stdout, explicitly mounted file logs, host metrics, and application OTLP telemetry.
+- The Gateway normalizes, enriches, batches, and routes signals to their backends.
+- Grafana provides dashboards, Explore, and correlation workflows across the collected data.
+
+The v0.1.0 profile is designed for a single host or VM.
+
+Telemetry stays in the operator's infrastructure unless external storage or forwarding is configured outside this repository.
+
+## Why
+
+Applications should not need to know about log, metric, trace, or dashboard backends. Infrastructure collection should not require every workload to own its telemetry transport. Observability Platform creates a stable boundary:
+
+- **Node Agents** own node-local collection and application intake.
+- **The Gateway** owns centralized OpenTelemetry processing and backend routing.
+- **Backends and Grafana** own storage, querying, visualization, and investigation.
+
+This lets applications emit standard OTLP while operators choose consistent collection profiles, security controls, and observability workflows.
 
 ## Architecture
 
-```text
-Applications / Infrastructure
-        -> Node Agent
-        -> OTLP / mTLS
-        -> Gateway
-        -> Loki / Tempo / Prometheus
-        -> Grafana
+```mermaid
+flowchart LR
+  subgraph telemetryPath["Telemetry path"]
+    Applications["Applications"] -->|"OTLP"| NodeAgent["Node Agent"]
+    Infrastructure["Infrastructure sources\nDocker stdout, file logs, host metrics"] --> NodeAgent
+    NodeAgent -->|"OTLP; mTLS in the production-oriented profile"| Gateway["OpenTelemetry Gateway"]
+    Gateway -->|"logs"| Loki["Logs: Loki"]
+    Gateway -->|"traces"| Tempo["Traces: Tempo"]
+    Gateway -->|"exposes metrics"| Prometheus["Metrics: Prometheus"]
+    Loki --> Grafana["Grafana"]
+    Tempo --> Grafana
+    Prometheus --> Grafana
+  end
+
+  subgraph managementPath["Management and control path"]
+    Console["Platform Management Console"] --> ControlPlane["Control Plane API"]
+    ControlPlane --> Registry["Agent Registry and enrollment lifecycle"]
+    ControlPlane -.->|"enrollment and lifecycle workflows"| NodeAgent
+    Console -.->|"fleet status and Grafana deep-links"| Grafana
+  end
 ```
 
-Control plane:
+The architecture keeps collection, transport, processing, storage, and exploration separate:
 
-```text
-Operator
-        -> Control Plane API
-        -> Enrollment / Agent Registry
-        -> Node Agent fleet status
+- **Node Agent:** local collector and OTLP endpoint for applications; it does not contain backend-specific configuration.
+- **OpenTelemetry Gateway:** centralized receiver, processor, and signal router.
+- **Loki, Tempo, and Prometheus:** self-hosted log, trace, and metric backends. Prometheus scrapes metrics exposed by the Gateway.
+- **Grafana:** the primary UI for telemetry queries, dashboards, and exploration.
+- **Control Plane and Console:** enrollment, Agent Registry lifecycle, fleet status, and links to relevant Grafana views.
+
+## Capabilities
+
+| Area | Available in v0.1 |
+| --- | --- |
+| Collection | Application OTLP logs, metrics, and traces; Docker stdout; explicitly mounted file logs; and host CPU, memory, filesystem, and network metrics |
+| Agent profiles | Capability profiles for OTLP, Docker, file logs, and host metrics |
+| Processing | Gateway normalization, enrichment, batching, routing, and Prometheus metric exposure |
+| Storage and exploration | Loki logs, Tempo traces, Prometheus metrics, Grafana datasources, dashboards, Explore, and log/trace correlation |
+| Agent lifecycle | One-time enrollment credentials, node-local private-key generation, CSR-only enrollment, Agent Registry, heartbeats, certificate metadata, renewal, and disable controls |
+| Transport security | mTLS support with a production-oriented external issuer boundary; plaintext OTLP remains available for migration and rollback |
+| Operations | Single-tenant operator-token API access, persistent queues for Gateway log and trace export, local retention controls, health checks, self-monitoring, backup/restore, and acceptance tooling |
+
+The repository includes an instrumented `orders-api` / `payment-api` reference application for validating distributed traces, logs, metrics, and error investigation.
+
+## Quick Start
+
+### Production-oriented path
+
+The supported single-tenant path requires a Linux host with Docker and Docker Compose, a long random operator token, and production PKI material prepared outside this repository. Production enrollment uses an external/customer-managed issuer command.
+
+```bash
+git clone https://github.com/yashikagarg05/observability-platform.git
+cd observability-platform
+
+cp deployments/production/production.env.example /etc/observability-platform/production.env
+# Edit /etc/observability-platform/production.env and replace every changeme value.
+
+set -a
+. /etc/observability-platform/production.env
+set +a
+
+docker compose \
+  -f docker-compose.yml \
+  -f deployments/docker-compose/production.yaml \
+  up -d
+
+docker compose \
+  -f docker-compose.yml \
+  -f deployments/docker-compose/production.yaml \
+  ps
 ```
 
-## Supported Today
+Configure at least the tenant ID, operator token, Grafana password, certificate paths, enrollment PKI path, issuer mode, external issuer command, and trace retention before startup. Follow the [production quickstart](docs/production-quickstart.md) for the complete procedure and the [production deployment guide](docs/production-deployment.md) for configuration, retention, recovery, and validation.
 
-- Docker stdout logs.
-- File logs.
-- Host metrics.
-- Application OTLP logs, metrics, and traces.
-- Distributed trace reference application.
-- Node Agent mTLS enrollment.
-- Agent registry, heartbeat, and status.
-- Single-tenant operator-token authentication.
-- Persistent Gateway queues.
-- Local retention defaults for logs, traces, and metrics.
-- Backup and restore scripts for the single-node profile.
+### Local or evaluation path
+
+Use the reference application workflow for isolated evaluation. It generates throwaway development mTLS material and must not be used for production:
+
+```bash
+GATEWAY_DNS=otel-collector \
+NODE_AGENT_AGENT_ID=app-observability-agent \
+NODE_AGENT_TENANT_ID=demo-tenant \
+NODE_AGENT_SITE_ID=demo-site \
+NODE_AGENT_ENVIRONMENT=development \
+./scripts/dev-mtls-certs.sh .tmp/app-observability-mtls
+
+GATEWAY_CERTS_HOST_PATH=$PWD/.tmp/app-observability-mtls/gateway/certs \
+GATEWAY_SECRETS_HOST_PATH=$PWD/.tmp/app-observability-mtls/gateway/secrets \
+docker compose -f docker-compose.yml -f deployments/docker-compose/gateway-mtls.yaml up -d
+
+NODE_AGENT_CERTS_HOST_PATH=$PWD/.tmp/app-observability-mtls/agent/certs \
+NODE_AGENT_SECRETS_HOST_PATH=$PWD/.tmp/app-observability-mtls/agent/secrets \
+docker compose -f examples/app-observability/docker-compose.yaml up -d --build
+
+docker compose -f examples/app-observability/docker-compose.yaml exec orders-api npm run traffic
+```
+
+See the [application observability guide](docs/application-observability.md) for verification and troubleshooting.
+
+## See It in Action
+
+The repository has no checked-in screenshots or image assets. The included reference application and provisioned Grafana dashboards provide the live demonstration:
+
+- **Application Observability Reference** shows request rate, error rate, latency, recent logs, and demo counters for `orders-api` and `payment-api`.
+- **Platform Self-Monitoring** shows platform scrape health, Gateway telemetry, export failures, queues, CPU, and memory.
+
+Run the evaluation workflow above, open Grafana, and use the [application observability guide](docs/application-observability.md) to verify logs, metrics, traces, and correlation.
+
+## How It Works
+
+1. Applications emit OTLP to a local Node Agent. The Agent can also collect Docker stdout, selected file logs, and host metrics from its node.
+2. The Node Agent forwards OTLP to the Gateway. The production-oriented deployment supports mTLS; plaintext OTLP is retained for migration and rollback.
+3. The Gateway processes telemetry, exports logs to Loki and traces to Tempo, and exposes metrics for Prometheus to scrape.
+4. Grafana queries Loki, Tempo, and Prometheus for dashboards, Explore, and cross-signal investigation.
+5. Operators use the Control Plane API and Platform Management Console to enroll Agents, inspect fleet state, and reach relevant Grafana views.
+
+## Components
+
+| Component | Purpose |
+| --- | --- |
+| [Node Agent](collector/agent) | Collects node-local sources and accepts application OTLP; forwards OTLP to the Gateway |
+| [OpenTelemetry Gateway](collector/gateway) | Receives, normalizes, enriches, batches, and routes telemetry |
+| [Loki](loki), [Prometheus](prometheus), and [Tempo](tempo) | Store and query logs, metrics, and traces |
+| [Grafana provisioning and dashboards](grafana) | Provides pre-provisioned datasources, dashboards, and correlation |
+| [Control Plane API](services/enrollment) | Provides enrollment, Agent Registry, lifecycle, and fleet APIs |
+| [Platform Management Console](frontend) | Provides browser workflows for fleet visibility and enrollment |
+| [Reference application](examples/app-observability) | Demonstrates distributed traces, logs, metrics, and error investigation |
+
+## Platform Management Console
+
+The Platform Management Console provides fleet and control-plane workflows: overview, Agents, enrollment credentials, sites, environments, capabilities, integrations, certificate status, and links to relevant Grafana views.
+
+Enter the configured operator token in the Console to access production Control Plane APIs. The Console is not a replacement for Grafana: Grafana remains the primary interface for logs, metrics, traces, dashboards, and Explore.
 
 ## Deployment
 
-Start with:
+Two deployment modes are available:
 
-- Production quickstart: `docs/production-quickstart.md`
-- Production deployment runbook: `docs/production-deployment.md`
-- Node Agent onboarding: `docs/node-agent-onboarding.md`
+- **Local/evaluation:** the reference application and throwaway development mTLS material validate the telemetry path.
+- **Production-oriented:** a single-tenant, single-node Docker Compose deployment with Gateway mTLS transport, external issuer integration, persistent Gateway queues for logs and traces, local retention controls, health checks, backup/restore scripts, and an acceptance checklist.
 
-Grafana is included in the Compose deployment and remains the primary UI for logs, metrics, traces, dashboards, and exploration.
+The production-oriented profile is not highly available, multi-tenant, or a Kubernetes deployment. Review [production deployment](docs/production-deployment.md), [production enrollment and certificate lifecycle](docs/production-enrollment-lifecycle.md), and the [production acceptance checklist](docs/production-acceptance-checklist.md) before operating it.
 
-## Limitations
+## Documentation
 
-The first public release is intentionally scoped:
+### Getting started
 
-- Single-node Docker Compose deployment.
-- Single tenant.
-- Local persistent storage.
-- No high availability.
-- No Kubernetes deployment yet.
-- No managed multi-tenant SaaS mode.
-- Production CA implementation is external/customer-managed.
-- Certificate lifecycle controls exist, but full Gateway-side dynamic revocation is future work.
+- [Production quickstart](docs/production-quickstart.md)
+- [Node Agent onboarding](docs/node-agent-onboarding.md)
+- [Application observability reference](docs/application-observability.md)
 
-## Roadmap
+### Security and enrollment
 
-Planned future work includes Kubernetes deployment, HA storage options, deeper production CA integrations, stronger Gateway-side authorization, and broader packaging.
+- [Node Agent mTLS](docs/node-agent-mtls.md)
+- [Node Agent enrollment MVP](docs/node-agent-enrollment-mvp.md)
+- [Production enrollment and certificate lifecycle](docs/production-enrollment-lifecycle.md)
+- [Production PKI](docs/production-pki.md)
 
-## Repository Map
+### Operations
 
-- Gateway: `collector/gateway`
-- Node Agent release source: `collector/agent`
-- Operator onboarding: `docs/node-agent-onboarding.md`
-- Application observability reference: `docs/application-observability.md`
-- Production quickstart: `docs/production-quickstart.md`
-- Single-tenant production deployment: `docs/production-deployment.md`
-- Compatibility and releases: `docs/releases/compatibility.md`
+- [Production deployment](docs/production-deployment.md)
+- [Production acceptance checklist](docs/production-acceptance-checklist.md)
+- [Compatibility](docs/releases/compatibility.md)
 
-The single-tenant production profile sets explicit local retention defaults for logs, traces, and metrics; see `docs/production-deployment.md`.
+### Architecture and telemetry
 
-Use `make validate` before deployment and `make package-node-agent VERSION=1.0.0` to create the distributable archive.
+- [Platform architecture](docs/platform-architecture.md)
+- [Trace and log correlation](docs/trace-log-correlation.md)
+- [Docker logging](docs/docker-logging.md)
+- [Remote log collection](docs/remote-log-collection.md)
+
+## Scope and Roadmap
+
+### Current scope
+
+v0.1.0 is intentionally scoped to a single tenant on a single host or VM with local persistent storage. It does not provide high availability, backend replication, Kubernetes deployment, multi-tenant isolation, remote Agent upgrades/configuration, a bundled production CA, or Gateway-side dynamic certificate revocation.
+
+### Roadmap
+
+Future work may address Kubernetes deployment, highly available storage options, deeper production CA integrations, stronger Gateway-side authorization, and broader packaging. Current operational boundaries are documented in the [production deployment guide](docs/production-deployment.md).
+
+## Security
+
+Report vulnerabilities according to the [security policy](SECURITY.md). For deployment security, review the [production PKI guide](docs/production-pki.md) and [production enrollment and certificate lifecycle](docs/production-enrollment-lifecycle.md). Keep production private keys, certificates, environment files, tokens, and backups outside the repository.
+
+## License
+
+Licensed under the [Apache License 2.0](LICENSE).

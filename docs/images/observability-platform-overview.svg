@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 650" role="img" aria-labelledby="title description">
+  <title id="title">Observability Platform overview</title>
+  <desc id="description">Telemetry flows from applications and infrastructure through a Node Agent and OpenTelemetry Gateway to Loki, Prometheus, Tempo, and Grafana. The Platform Management Console manages the Control Plane API and Agent Registry separately.</desc>
+  <defs>
+    <marker id="telemetry-arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#0f766e"/>
+    </marker>
+    <marker id="management-arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#4f46e5"/>
+    </marker>
+    <style>
+      .canvas { fill: #ffffff; }
+      .path { fill: #f8fafc; stroke: #cbd5e1; stroke-width: 1.5; }
+      .management-path { fill: #fafafa; stroke: #cbd5e1; stroke-width: 1.5; }
+      .node { fill: #ffffff; stroke: #94a3b8; stroke-width: 1.5; }
+      .node-telemetry { fill: #f0fdfa; stroke: #0f766e; stroke-width: 1.75; }
+      .node-gateway { fill: #ecfeff; stroke: #0e7490; stroke-width: 2; }
+      .node-management { fill: #eef2ff; stroke: #4f46e5; stroke-width: 1.75; }
+      .title { fill: #0f172a; font: 700 25px Arial, Helvetica, sans-serif; }
+      .subtitle { fill: #475569; font: 400 14px Arial, Helvetica, sans-serif; }
+      .section-label { fill: #0f766e; font: 700 12px Arial, Helvetica, sans-serif; letter-spacing: 1.5px; }
+      .management-label { fill: #4f46e5; font: 700 12px Arial, Helvetica, sans-serif; letter-spacing: 1.5px; }
+      .node-title { fill: #0f172a; font: 700 16px Arial, Helvetica, sans-serif; }
+      .node-text { fill: #475569; font: 400 12px Arial, Helvetica, sans-serif; }
+      .arrow-label { fill: #0f766e; font: 700 11px Arial, Helvetica, sans-serif; }
+      .management-arrow-label { fill: #4f46e5; font: 700 11px Arial, Helvetica, sans-serif; }
+      .telemetry-line { fill: none; stroke: #0f766e; stroke-width: 2; marker-end: url(#telemetry-arrow); }
+      .management-line { fill: none; stroke: #4f46e5; stroke-width: 2; marker-end: url(#management-arrow); }
+      .management-dashed { fill: none; stroke: #4f46e5; stroke-width: 1.75; stroke-dasharray: 6 5; marker-end: url(#management-arrow); }
+    </style>
+  </defs>
+
+  <rect class="canvas" width="1200" height="650"/>
+  <text class="title" x="48" y="50">Observability Platform</text>
+  <text class="subtitle" x="48" y="75">A self-hosted telemetry layer for applications and infrastructure</text>
+
+  <rect class="path" x="34" y="98" width="1132" height="322" rx="12"/>
+  <text class="section-label" x="58" y="126">TELEMETRY PATH</text>
+
+  <rect class="node" x="70" y="160" width="180" height="74" rx="8"/>
+  <text class="node-title" x="92" y="190">Applications</text>
+  <text class="node-text" x="92" y="211">OTLP logs, metrics, traces</text>
+
+  <rect class="node" x="70" y="284" width="180" height="88" rx="8"/>
+  <text class="node-title" x="92" y="316">Infrastructure</text>
+  <text class="node-text" x="92" y="337">Docker stdout, file logs,</text>
+  <text class="node-text" x="92" y="354">host metrics</text>
+
+  <rect class="node-telemetry" x="318" y="218" width="180" height="96" rx="8"/>
+  <text class="node-title" x="348" y="251">Node Agent</text>
+  <text class="node-text" x="348" y="273">Local collection and</text>
+  <text class="node-text" x="348" y="290">application OTLP intake</text>
+
+  <rect class="node-gateway" x="568" y="218" width="200" height="96" rx="8"/>
+  <text class="node-title" x="596" y="251">OpenTelemetry Gateway</text>
+  <text class="node-text" x="596" y="273">Process, enrich, batch,</text>
+  <text class="node-text" x="596" y="290">and route telemetry</text>
+
+  <rect class="node" x="838" y="142" width="160" height="60" rx="8"/>
+  <text class="node-title" x="862" y="169">Loki</text>
+  <text class="node-text" x="862" y="187">Logs</text>
+
+  <rect class="node" x="838" y="229" width="160" height="60" rx="8"/>
+  <text class="node-title" x="862" y="256">Prometheus</text>
+  <text class="node-text" x="862" y="274">Metrics</text>
+
+  <rect class="node" x="838" y="316" width="160" height="60" rx="8"/>
+  <text class="node-title" x="862" y="343">Tempo</text>
+  <text class="node-text" x="862" y="361">Traces</text>
+
+  <rect class="node-telemetry" x="1048" y="218" width="92" height="96" rx="8"/>
+  <text class="node-title" x="1060" y="260">Grafana</text>
+  <text class="node-text" x="1060" y="281">Explore</text>
+
+  <path class="telemetry-line" d="M250 197 H318"/>
+  <text class="arrow-label" x="272" y="186">OTLP</text>
+  <path class="telemetry-line" d="M250 328 H286 V280 H318"/>
+  <path class="telemetry-line" d="M498 266 H568"/>
+  <text class="arrow-label" x="518" y="255">OTLP</text>
+  <text class="arrow-label" x="520" y="278">mTLS</text>
+  <path class="telemetry-line" d="M768 266 H802 V172 H838"/>
+  <path class="telemetry-line" d="M768 266 H838"/>
+  <path class="telemetry-line" d="M768 266 H802 V346 H838"/>
+  <text class="arrow-label" x="787" y="250">metrics</text>
+  <path class="telemetry-line" d="M998 172 H1020 V250 H1048"/>
+  <path class="telemetry-line" d="M998 259 H1048"/>
+  <path class="telemetry-line" d="M998 346 H1020 V282 H1048"/>
+
+  <rect class="management-path" x="34" y="450" width="1132" height="154" rx="12"/>
+  <text class="management-label" x="58" y="478">MANAGEMENT PATH</text>
+
+  <rect class="node-management" x="70" y="506" width="220" height="64" rx="8"/>
+  <text class="node-title" x="92" y="533">Platform Management Console</text>
+  <text class="node-text" x="92" y="552">Fleet and enrollment workflows</text>
+
+  <rect class="node-management" x="432" y="506" width="190" height="64" rx="8"/>
+  <text class="node-title" x="456" y="533">Control Plane API</text>
+  <text class="node-text" x="456" y="552">Operator-authenticated API</text>
+
+  <rect class="node-management" x="764" y="493" width="290" height="90" rx="8"/>
+  <text class="node-title" x="790" y="524">Agent Registry</text>
+  <text class="node-text" x="790" y="545">Enrollment, certificate lifecycle,</text>
+  <text class="node-text" x="790" y="562">heartbeat, and fleet state</text>
+
+  <path class="management-line" d="M290 538 H432"/>
+  <path class="management-line" d="M622 538 H764"/>
+  <path class="management-dashed" d="M527 506 V395 H408 V314"/>
+  <text class="management-arrow-label" x="536" y="418">enrollment and lifecycle</text>
+</svg>
