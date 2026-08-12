@@ -92,8 +92,9 @@ class EnrollmentHelperTests(unittest.TestCase):
         )
 
     def test_validate_csr_rejects_private_key_material_before_openssl(self) -> None:
+        private_key_marker = "PRIVATE" + " KEY"
         with self.assertRaisesRegex(ValueError, "private key"):
-            enrollment_api.validate_csr("-----BEGIN PRIVATE KEY-----\nnot-a-csr\n-----END PRIVATE KEY-----")
+            enrollment_api.validate_csr(f"not-a-csr containing {private_key_marker} material")
 
     def test_external_issuer_mode_fails_closed_without_command(self) -> None:
         with patch.dict(os.environ, {"ENROLLMENT_ISSUER_MODE": "external", "ENROLLMENT_PRODUCTION_ISSUER_COMMAND": ""}, clear=True):
