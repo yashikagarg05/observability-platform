@@ -1,4 +1,20 @@
-.PHONY: validate validate-mtls package-node-agent verify-node-agent-release
+.PHONY: help setup validate validate-mtls test lint frontend-build acceptance package-node-agent verify-node-agent-release
+
+help:
+	@printf '%s\n' \
+		'Observability Platform developer commands:' \
+		'  make setup                         Copy .env.example to .env when missing' \
+		'  make validate                      Validate base Compose and Gateway Collector config' \
+		'  make validate-mtls                 Validate mTLS cert profiles and generated Agent configs' \
+		'  make test                          Run Python unit tests' \
+		'  make lint                          Compile Python files for syntax validation' \
+		'  make frontend-build                Install and build the Platform Management Console' \
+		'  make acceptance                    Run non-destructive acceptance checks against a running stack' \
+		'  make package-node-agent VERSION=x  Build Node Agent release artifacts' \
+		'  make verify-node-agent-release VERSION=x  Verify Node Agent release artifacts'
+
+setup:
+	@test -f .env || cp .env.example .env
 
 validate:
 	docker compose --env-file .env.example config --quiet
@@ -46,6 +62,19 @@ validate-mtls:
 			-e OTEL_DEPLOYMENT_ENVIRONMENT=validation \
 			otel/opentelemetry-collector-contrib:0.156.0@sha256:125bdbeb7590cc1952c5b3430ecf14063568980c2c93d5b38676cc0446ed8108 validate --config="/etc/otelcol/config/generated/$$(basename "$$config")" || exit 1; \
 	done
+
+test:
+	python3 -m unittest discover -s tests -p 'test_*.py'
+
+lint:
+	python3 -m compileall services scripts collector/agent/tools tests
+
+frontend-build:
+	npm --prefix frontend ci
+	npm --prefix frontend run build
+
+acceptance:
+	python3 scripts/acceptance-check.py
 
 package-node-agent:
 	@test -n "$(VERSION)" || (echo "VERSION is required"; exit 1)
