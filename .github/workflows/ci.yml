@@ -91,7 +91,7 @@ jobs:
         run: npm --prefix frontend run build
 
   python:
-    name: Check Python Syntax
+    name: Test Python
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -103,4 +103,53 @@ jobs:
           python-version: "3.12"
 
       - name: Compile Python files
-        run: python -m compileall services scripts collector/agent/tools
+        run: make lint
+
+      - name: Run Python tests
+        run: make test
+
+  hygiene:
+    name: Repository Hygiene
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Check tracked files for generated artifacts and private key material
+        run: |
+          python3 - <<'PY'
+          from __future__ import annotations
+
+          import pathlib
+          import re
+          import subprocess
+          import sys
+
+          tracked = subprocess.check_output(["git", "ls-files"], text=True).splitlines()
+          forbidden_dirs = {"node_modules", "dist", ".tmp", "backups", "__pycache__"}
+          forbidden_suffixes = {".key", ".pem", ".crt", ".csr", ".srl", ".p12", ".pfx", ".pyc", ".tsbuildinfo"}
+          allowed_env_examples = {".env.example"}
+          failures: list[str] = []
+
+          for name in tracked:
+              path = pathlib.Path(name)
+              parts = set(path.parts)
+              if parts & forbidden_dirs:
+                  failures.append(f"tracked generated/runtime path: {name}")
+              if path.suffix in forbidden_suffixes:
+                  failures.append(f"tracked generated/sensitive extension: {name}")
+              if path.name.startswith(".env") and path.name not in allowed_env_examples:
+                  failures.append(f"tracked environment file: {name}")
+
+              try:
+                  text = path.read_text(errors="ignore")
+              except UnicodeDecodeError:
+                  continue
+              if re.search(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----", text):
+                  failures.append(f"tracked private key material: {name}")
+
+          if failures:
+              print("\n".join(failures))
+              sys.exit(1)
+          print("tracked-file hygiene checks passed")
+          PY
