@@ -114,14 +114,43 @@ The repository includes an instrumented `orders-api` / `payment-api` reference a
 
 ## Quick Start
 
-### Production-oriented path
+### Local or evaluation path
 
-The supported single-tenant path requires a Linux host with Docker and Docker Compose, a long random operator token, and production PKI material prepared outside this repository. Production enrollment uses an external/customer-managed issuer command.
+Use the reference application workflow for isolated evaluation. It generates throwaway development mTLS material and must not be used for production.
 
 ```bash
 git clone https://github.com/yashikagarg05/observability-platform.git
 cd observability-platform
 
+cp .env.example .env
+
+GATEWAY_DNS=otel-collector \
+NODE_AGENT_AGENT_ID=app-observability-agent \
+NODE_AGENT_TENANT_ID=demo-tenant \
+NODE_AGENT_SITE_ID=demo-site \
+NODE_AGENT_ENVIRONMENT=development \
+./scripts/dev-mtls-certs.sh .tmp/app-observability-mtls
+
+GATEWAY_CERTS_HOST_PATH=$PWD/.tmp/app-observability-mtls/gateway/certs \
+GATEWAY_SECRETS_HOST_PATH=$PWD/.tmp/app-observability-mtls/gateway/secrets \
+docker compose -f docker-compose.yml -f deployments/docker-compose/gateway-mtls.yaml up -d
+
+NODE_AGENT_CERTS_HOST_PATH=$PWD/.tmp/app-observability-mtls/agent/certs \
+NODE_AGENT_SECRETS_HOST_PATH=$PWD/.tmp/app-observability-mtls/agent/secrets \
+docker compose -f examples/app-observability/docker-compose.yaml up -d --build
+
+docker compose -f examples/app-observability/docker-compose.yaml exec orders-api npm run traffic
+```
+
+Open Grafana at `http://localhost:3000` and sign in with the local `.env` credentials (`admin` / `admin` by default). See the [application observability guide](docs/application-observability.md) for verification and troubleshooting.
+
+If port `3000` is already in use, change `GRAFANA_PORT` in `.env` before starting the stack.
+
+### Production-oriented path
+
+The supported single-tenant path requires a Linux host with Docker and Docker Compose, a long random operator token, and production PKI material prepared outside this repository. Production enrollment uses an external/customer-managed issuer command.
+
+```bash
 cp deployments/production/production.env.example /etc/observability-platform/production.env
 # Edit /etc/observability-platform/production.env and replace every changeme value.
 
@@ -142,39 +171,14 @@ docker compose \
 
 Configure at least the tenant ID, operator token, Grafana password, certificate paths, enrollment PKI path, issuer mode, external issuer command, and trace retention before startup. Follow the [production quickstart](docs/production-quickstart.md) for the complete procedure and the [production deployment guide](docs/production-deployment.md) for configuration, retention, recovery, and validation.
 
-### Local or evaluation path
-
-Use the reference application workflow for isolated evaluation. It generates throwaway development mTLS material and must not be used for production:
-
-```bash
-GATEWAY_DNS=otel-collector \
-NODE_AGENT_AGENT_ID=app-observability-agent \
-NODE_AGENT_TENANT_ID=demo-tenant \
-NODE_AGENT_SITE_ID=demo-site \
-NODE_AGENT_ENVIRONMENT=development \
-./scripts/dev-mtls-certs.sh .tmp/app-observability-mtls
-
-GATEWAY_CERTS_HOST_PATH=$PWD/.tmp/app-observability-mtls/gateway/certs \
-GATEWAY_SECRETS_HOST_PATH=$PWD/.tmp/app-observability-mtls/gateway/secrets \
-docker compose -f docker-compose.yml -f deployments/docker-compose/gateway-mtls.yaml up -d
-
-NODE_AGENT_CERTS_HOST_PATH=$PWD/.tmp/app-observability-mtls/agent/certs \
-NODE_AGENT_SECRETS_HOST_PATH=$PWD/.tmp/app-observability-mtls/agent/secrets \
-docker compose -f examples/app-observability/docker-compose.yaml up -d --build
-
-docker compose -f examples/app-observability/docker-compose.yaml exec orders-api npm run traffic
-```
-
-See the [application observability guide](docs/application-observability.md) for verification and troubleshooting.
-
 ## See It in Action
 
-The repository has no checked-in screenshots or image assets. The included reference application and provisioned Grafana dashboards provide the live demonstration:
+The included reference application and provisioned Grafana dashboards provide the live demonstration:
 
 - **Application Observability Reference** shows request rate, error rate, latency, recent logs, and demo counters for `orders-api` and `payment-api`.
 - **Platform Self-Monitoring** shows platform scrape health, Gateway telemetry, export failures, queues, CPU, and memory.
 
-Run the evaluation workflow above, open Grafana, and use the [application observability guide](docs/application-observability.md) to verify logs, metrics, traces, and correlation.
+Run the evaluation workflow above, open Grafana, and use the [application observability guide](docs/application-observability.md) to verify logs, metrics, traces, and correlation. The [visual asset checklist](docs/images/README.md) tracks screenshots to capture for the next public release.
 
 ## How It Works
 
@@ -231,6 +235,8 @@ The production-oriented profile is not highly available, multi-tenant, or a Kube
 - [Production deployment](docs/production-deployment.md)
 - [Production acceptance checklist](docs/production-acceptance-checklist.md)
 - [Compatibility](docs/releases/compatibility.md)
+- [Container image policy](docs/releases/image-policy.md)
+- [Release process](docs/releases/release-process.md)
 
 ### Architecture and telemetry
 

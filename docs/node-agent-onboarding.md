@@ -1,6 +1,6 @@
 # Node Agent onboarding
 
-1. Download `otel-node-agent-<version>.tgz` and its `.sha256` file; verify the checksum.
+1. Download `otel-node-agent-<version>.tgz` and `SHA256SUMS` from the matching GitHub Release; verify the checksum.
 2. Extract it, then run `cp .env.example .env`.
 3. Set `GATEWAY_OTLP_GRPC_ENDPOINT`, `AGENT_HOST_NAME`, namespace, and environment.
 4. Select one source profile without editing YAML:
