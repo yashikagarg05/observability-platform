@@ -31,7 +31,7 @@ tar -C "$stage" -czf "$stage/$name.tgz" "$name"
   cd "$stage"
   sha256sum "$name.tgz" > SHA256SUMS
 )
-printf '{"nodeAgentVersion":"%s","collectorImage":"otel/opentelemetry-collector-contrib:0.156.0","gatewayCompatibility":">=1.0.0 <2.0.0"}\n' "$version" > "$stage/manifest.json"
+printf '{"nodeAgentVersion":"%s","collectorImage":"otel/opentelemetry-collector-contrib:0.156.0@sha256:125bdbeb7590cc1952c5b3430ecf14063568980c2c93d5b38676cc0446ed8108","gatewayCompatibility":">=1.0.0 <2.0.0"}\n' "$version" > "$stage/manifest.json"
 printf '{"bomFormat":"CycloneDX","specVersion":"1.5","version":1,"metadata":{"component":{"type":"application","name":"otel-node-agent","version":"%s"}},"components":[{"type":"container","name":"otel/opentelemetry-collector-contrib","version":"0.156.0"}]}\n' "$version" > "$stage/sbom.json"
 
 jq -e . "$stage/manifest.json" >/dev/null

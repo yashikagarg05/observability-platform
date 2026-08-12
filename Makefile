@@ -1,8 +1,8 @@
 .PHONY: validate validate-mtls package-node-agent verify-node-agent-release
 
 validate:
-	docker compose config --quiet
-	docker run --rm --entrypoint /otelcol-contrib -v "$(CURDIR)/collector/gateway:/etc/otelcol:ro" otel/opentelemetry-collector-contrib:0.156.0 validate --config=/etc/otelcol/config.yaml
+	docker compose --env-file .env.example config --quiet
+	docker run --rm --entrypoint /otelcol-contrib -v "$(CURDIR)/collector/gateway:/etc/otelcol:ro" otel/opentelemetry-collector-contrib:0.156.0@sha256:125bdbeb7590cc1952c5b3430ecf14063568980c2c93d5b38676cc0446ed8108 validate --config=/etc/otelcol/config.yaml
 
 validate-mtls:
 	tmp_dir=$$(mktemp -d); \
@@ -28,7 +28,7 @@ validate-mtls:
 		-e GATEWAY_TLS_CERT_FILE=/tls/certs/gateway.crt \
 		-e GATEWAY_TLS_KEY_FILE=/tls/secrets/gateway.key \
 		-e GATEWAY_CLIENT_CA_FILE=/tls/certs/agent-ca-bundle.pem \
-		otel/opentelemetry-collector-contrib:0.156.0 validate --config=/etc/otelcol/config-mtls.yaml; \
+		otel/opentelemetry-collector-contrib:0.156.0@sha256:125bdbeb7590cc1952c5b3430ecf14063568980c2c93d5b38676cc0446ed8108 validate --config=/etc/otelcol/config-mtls.yaml; \
 	for config in collector/agent/config/generated/*-mtls.yaml; do \
 		extra_mount=; \
 		case "$$config" in *hostmetrics*) extra_mount='-v /:/hostfs:ro' ;; esac; \
@@ -44,7 +44,7 @@ validate-mtls:
 			-e AGENT_HOST_NAME=validation-node \
 			-e OTEL_SERVICE_NAMESPACE=applications \
 			-e OTEL_DEPLOYMENT_ENVIRONMENT=validation \
-			otel/opentelemetry-collector-contrib:0.156.0 validate --config="/etc/otelcol/config/generated/$$(basename "$$config")" || exit 1; \
+			otel/opentelemetry-collector-contrib:0.156.0@sha256:125bdbeb7590cc1952c5b3430ecf14063568980c2c93d5b38676cc0446ed8108 validate --config="/etc/otelcol/config/generated/$$(basename "$$config")" || exit 1; \
 	done
 
 package-node-agent:
