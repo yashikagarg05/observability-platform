@@ -39,3 +39,38 @@ timelines depend on severity, exploitability, and release complexity.
 
 Please allow reasonable time for the issue to be investigated and addressed
 before publicly disclosing the vulnerability.
+
+## Security Considerations
+
+Observability Platform handles telemetry, credentials, certificates, and operator
+access to infrastructure-facing services. Treat the following as sensitive:
+
+- `CONTROL_PLANE_OPERATOR_TOKEN`, Grafana administrator credentials, enrollment
+  credentials, renewal credentials, and any copied `.env` files.
+- Gateway and Agent private keys, CA material, certificate bundles, and
+  production issuer integration files.
+- Telemetry payloads that may contain customer data, secrets, access tokens,
+  headers, database queries, stack traces, or personally identifiable
+  information.
+- Backups created by `scripts/backup-platform.sh`, because they may include
+  Grafana state, telemetry data, and Control Plane state.
+
+Do not commit production secrets, private keys, generated certificates, local
+environment files, Docker volumes, runtime state, or backups.
+
+## Deployment Guidance
+
+- Expose only the ports required for the deployment. Avoid exposing Grafana,
+  Control Plane, OTLP, Prometheus, Loki, or Tempo endpoints directly to the
+  public internet unless an appropriate network and authentication boundary is
+  in place.
+- Use a long random `CONTROL_PLANE_OPERATOR_TOKEN` for production-oriented
+  deployments and rotate it if it is disclosed.
+- Replace default Grafana credentials before using a shared host.
+- Keep production PKI material outside the repository and outside generated
+  release archives.
+- Use `ENROLLMENT_ISSUER_MODE=external` for production-oriented enrollment. The
+  development issuer mode is only for isolated validation.
+- Review telemetry sources before onboarding applications. Logs and traces can
+  contain sensitive application data unless instrumentation and log redaction
+  policies are applied upstream.

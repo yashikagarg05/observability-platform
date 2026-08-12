@@ -13,6 +13,8 @@ node_modules/
 *.tsbuildinfo
 frontend/vite.config.js
 frontend/vite.config.d.ts
+__pycache__/
+*.py[cod]
 
 # Local backups and generated certificate/key material
 backups/

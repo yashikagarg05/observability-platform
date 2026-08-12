@@ -238,6 +238,13 @@ The production-oriented profile is not highly available, multi-tenant, or a Kube
 - [Container image policy](docs/releases/image-policy.md)
 - [Release process](docs/releases/release-process.md)
 
+### Community and releases
+
+- [Contributing](CONTRIBUTING.md)
+- [Code of conduct](CODE_OF_CONDUCT.md)
+- [Changelog](CHANGELOG.md)
+- [Security policy](SECURITY.md)
+
 ### Architecture and telemetry
 
 - [Platform architecture](docs/platform-architecture.md)
