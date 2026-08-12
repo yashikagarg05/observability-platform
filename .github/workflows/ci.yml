@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - "release/**"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate Collector and Compose
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate base stack
+        run: make validate
+
+      - name: Validate mTLS profiles
+        run: make validate-mtls
+
+      - name: Validate production compose
+        env:
+          GRAFANA_PORT: "3000"
+          PROMETHEUS_PORT: "9090"
+          GATEWAY_OTLP_GRPC_PORT: "4317"
+          GATEWAY_OTLP_HTTP_PORT: "4318"
+          GATEWAY_OTLP_MTLS_GRPC_PORT: "4319"
+          GATEWAY_HEALTH_PORT: "13133"
+          CONTROL_PLANE_PORT: "8080"
+          PLATFORM_UI_PORT: "4173"
+          GRAFANA_ADMIN_USER: admin
+          GRAFANA_ADMIN_PASSWORD: ci-grafana-password
+          CONTROL_PLANE_TENANT_ID: tenant-a
+          CONTROL_PLANE_OPERATOR_TOKEN: ci-long-random-operator-token
+          PUBLIC_ENROLLMENT_ENDPOINT: http://localhost:8080
+          PUBLIC_CONTROL_PLANE_API_URL: http://localhost:8080
+          FRONTEND_CORS_ORIGIN: http://localhost:4173
+          GATEWAY_MEMORY_LIMIT_MIB: "768"
+          GATEWAY_MEMORY_SPIKE_LIMIT_MIB: "192"
+          GATEWAY_LOG_QUEUE_SIZE: "10000"
+          GATEWAY_TRACE_QUEUE_SIZE: "10000"
+          PROMETHEUS_RETENTION_TIME: 15d
+          PROMETHEUS_RETENTION_SIZE: 20GB
+          TRACE_RETENTION_HOURS: "168"
+          GATEWAY_CERTS_HOST_PATH: /tmp/otel-gateway/certs
+          GATEWAY_SECRETS_HOST_PATH: /tmp/otel-gateway/secrets
+          GATEWAY_TLS_CERT_FILE: /tls/certs/gateway.crt
+          GATEWAY_TLS_KEY_FILE: /tls/secrets/gateway.key
+          GATEWAY_CLIENT_CA_FILE: /tls/certs/agent-ca-bundle.pem
+          ENROLLMENT_PKI_HOST_PATH: /tmp/observability-platform/enrollment-pki
+          ENROLLMENT_CREDENTIALS_FILE: /var/lib/observability-platform/control-plane/enrollment-credentials.json
+          ENROLLMENT_REGISTRY_FILE: /var/lib/observability-platform/control-plane/agent-registry.json
+          ENROLLMENT_AUDIT_LOG: /var/lib/observability-platform/control-plane/audit.log
+          ENROLLMENT_ISSUER_MODE: development
+          ENROLLMENT_PRODUCTION_ISSUER_COMMAND: ""
+          ENROLLMENT_PRODUCTION_ISSUER_CA_BUNDLE: /tls/enrollment/agent-ca-bundle.pem
+          ENROLLMENT_ALLOW_DEVELOPMENT_ISSUER: "true"
+          ENROLLMENT_DEVELOPMENT_AGENT_CA_CERT: /tls/enrollment/agent-ca.pem
+          ENROLLMENT_DEVELOPMENT_AGENT_CA_KEY: /tls/enrollment/agent-ca.key
+          ENROLLMENT_DEVELOPMENT_AGENT_CA_BUNDLE: /tls/enrollment/agent-ca-bundle.pem
+          ENROLLMENT_GATEWAY_CA_BUNDLE: /tls/enrollment/gateway-ca-bundle.pem
+          ENROLLMENT_AGENT_CERT_DAYS: "60"
+          PROMETHEUS_URL: http://prometheus:9090
+          GRAFANA_URL: http://localhost:3000
+        run: docker compose -f docker-compose.yml -f deployments/docker-compose/production.yaml config --quiet
+
+  frontend:
+    name: Build Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm --prefix frontend ci
+
+      - name: Build frontend
+        run: npm --prefix frontend run build
+
+  python:
+    name: Check Python Syntax
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile Python files
+        run: python -m compileall services scripts collector/agent/tools

@@ -29,7 +29,7 @@ for volume in "${volumes[@]}"; do
   docker run --rm \
     -v "$full_name:/data" \
     -v "$PWD/$backup_dir/volumes:/backup:ro" \
-    busybox:1.36 \
+    busybox:1.36@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662 \
     sh -c "rm -rf /data/* /data/..?* /data/.[!.]* 2>/dev/null || true; tar -xzf /backup/${volume}.tgz -C /data"
 done
 

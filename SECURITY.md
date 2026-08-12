@@ -5,8 +5,10 @@
 If you discover a security vulnerability in this project, please do not open a
 public GitHub issue.
 
-Please report the vulnerability privately to the project maintainer through
-the security contact provided in the GitHub repository.
+Please report the vulnerability privately through GitHub Security Advisories or
+GitHub's private vulnerability reporting flow for this repository. If private
+reporting is unavailable, contact the repository maintainer privately through
+the maintainer profile listed on GitHub.
 
 When reporting a vulnerability, please include:
 
@@ -22,10 +24,16 @@ issue.
 
 ## Supported Versions
 
-Security fixes will initially target the latest supported release.
+| Version | Supported |
+| --- | --- |
+| `v0.1.x` | Yes |
+| `< v0.1.0` | No |
 
-As the project evolves, supported versions and security-maintenance windows
-will be documented here.
+Security fixes target the latest supported release line and `main` when the fix
+also applies to unreleased development work.
+
+The initial response target for vulnerability reports is 7 days. Resolution
+timelines depend on severity, exploitability, and release complexity.
 
 ## Responsible Disclosure
 

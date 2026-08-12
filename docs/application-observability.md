@@ -55,6 +55,12 @@ Host telemetry:
 
 ## Run The Demo
 
+Create the local Compose environment file:
+
+```bash
+cp .env.example .env
+```
+
 Create development mTLS certificates for the demo:
 
 ```bash
@@ -92,6 +98,12 @@ Open Grafana:
 
 ```text
 http://localhost:3000
+```
+
+Default local credentials from `.env.example`:
+
+```text
+admin / admin
 ```
 
 Dashboard:
