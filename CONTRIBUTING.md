@@ -22,6 +22,8 @@ git switch -c feature/<short-description>
 cp .env.example .env
 
 make help
+make demo-up
+make demo-traffic
 make validate
 make test
 ```
@@ -55,6 +57,13 @@ Show available commands:
 
 ```bash
 make help
+```
+
+Start the local evaluation stack and generate demo telemetry:
+
+```bash
+make demo-up
+make demo-traffic
 ```
 
 Validate base Compose and Gateway Collector configuration:

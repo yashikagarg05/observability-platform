@@ -122,29 +122,13 @@ Use the reference application workflow for isolated evaluation. It generates thr
 git clone https://github.com/yashikagarg05/observability-platform.git
 cd observability-platform
 
-cp .env.example .env
-
-GATEWAY_DNS=otel-collector \
-NODE_AGENT_AGENT_ID=app-observability-agent \
-NODE_AGENT_TENANT_ID=demo-tenant \
-NODE_AGENT_SITE_ID=demo-site \
-NODE_AGENT_ENVIRONMENT=development \
-./scripts/dev-mtls-certs.sh .tmp/app-observability-mtls
-
-GATEWAY_CERTS_HOST_PATH=$PWD/.tmp/app-observability-mtls/gateway/certs \
-GATEWAY_SECRETS_HOST_PATH=$PWD/.tmp/app-observability-mtls/gateway/secrets \
-docker compose -f docker-compose.yml -f deployments/docker-compose/gateway-mtls.yaml up -d
-
-NODE_AGENT_CERTS_HOST_PATH=$PWD/.tmp/app-observability-mtls/agent/certs \
-NODE_AGENT_SECRETS_HOST_PATH=$PWD/.tmp/app-observability-mtls/agent/secrets \
-docker compose -f examples/app-observability/docker-compose.yaml up -d --build
-
-docker compose -f examples/app-observability/docker-compose.yaml exec orders-api npm run traffic
+make demo-up
+make demo-traffic
 ```
 
 Open Grafana at `http://localhost:3000` and sign in with the local `.env` credentials (`admin` / `admin` by default). See the [application observability guide](docs/application-observability.md) for verification and troubleshooting.
 
-If port `3000` is already in use, change `GRAFANA_PORT` in `.env` before starting the stack.
+If port `3000` is already in use, change `GRAFANA_PORT` in `.env` before starting the stack. Stop the demo with `make demo-down`.
 
 ### Production-oriented path
 
