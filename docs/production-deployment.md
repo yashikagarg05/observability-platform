@@ -35,7 +35,7 @@ For production enrollment and certificate lifecycle controls, see `docs/producti
 - Production Gateway certificate/key and Agent client CA bundle installed outside the repository.
 - Enrollment signing material installed outside the repository.
 - A configured production external issuer command, or explicit development issuer mode for isolated validation only.
-- A long random `CONTROL_PLANE_OPERATOR_TOKEN`.
+- A long random `CONTROL_PLANE_OPERATOR_TOKEN` of at least 32 characters.
 
 ## Configuration
 
@@ -58,6 +58,16 @@ Replace every `changeme` value and set:
 
 Production PKI material must not come from `scripts/dev-mtls-certs.sh`.
 The production profile defaults to external issuer mode. It fails safely if no external issuer command is configured.
+The Control Plane rejects placeholder or short operator tokens at startup.
+
+Management interfaces bind to `127.0.0.1` by default:
+
+- `GRAFANA_BIND_ADDRESS`
+- `PROMETHEUS_BIND_ADDRESS`
+- `CONTROL_PLANE_BIND_ADDRESS`
+- `PLATFORM_UI_BIND_ADDRESS`
+
+Keep these loopback defaults for single-host operation. To expose the Platform UI, Control Plane, Grafana, or Prometheus remotely, put them behind an HTTPS reverse proxy or equivalent network control and set the relevant bind address intentionally.
 
 ## Install
 
@@ -79,6 +89,8 @@ Open:
 - Control Plane API: `http://localhost:${CONTROL_PLANE_PORT}`
 
 Enter the operator token in the Platform UI. In production mode, tenant identity comes from `CONTROL_PLANE_TENANT_ID`, not from caller-supplied tenant headers.
+
+Set `FRONTEND_CORS_ORIGIN` to the exact browser origin for the Platform UI. When operator-token authentication is enabled, the Control Plane does not fall back to wildcard CORS.
 
 ## Health Checks
 

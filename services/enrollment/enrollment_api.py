@@ -163,6 +163,24 @@ def optional_env_path(name: str) -> Path | None:
     return Path(value) if value else None
 
 
+def control_plane_cors_origin(operator_token: str | None) -> str | None:
+    origin = os.environ.get("FRONTEND_CORS_ORIGIN", "").strip()
+    if origin:
+        return origin
+    return None if operator_token else "*"
+
+
+def validate_operator_token(token: str | None) -> str | None:
+    if not token:
+        return None
+    weak_markers = ("changeme", "change-me", "replace-me")
+    if any(marker in token.lower() for marker in weak_markers):
+        raise RuntimeError("CONTROL_PLANE_OPERATOR_TOKEN must be replaced with a long random secret")
+    if len(token) < 32:
+        raise RuntimeError("CONTROL_PLANE_OPERATOR_TOKEN must be at least 32 characters")
+    return token
+
+
 def load_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text()) if path.exists() else {"tokens": {}}
 
@@ -745,7 +763,9 @@ class EnrollmentHandler(BaseHTTPRequestHandler):
     def send_json(self, status: int, payload: Any) -> None:
         self.send_response(status)
         self.send_header("content-type", "application/json")
-        self.send_header("access-control-allow-origin", os.environ.get("FRONTEND_CORS_ORIGIN", "*"))
+        cors_origin = control_plane_cors_origin(self.server.operator_token)  # type: ignore[attr-defined]
+        if cors_origin:
+            self.send_header("access-control-allow-origin", cors_origin)
         self.send_header("access-control-allow-headers", "authorization,content-type,x-tenant-id")
         self.send_header("access-control-allow-methods", "GET,POST,OPTIONS")
         self.end_headers()
@@ -1379,7 +1399,7 @@ def main() -> None:
         grafana_links=GrafanaLinks(os.environ.get("GRAFANA_URL", "http://localhost:3000")),
         audit_log=Path(os.environ["ENROLLMENT_AUDIT_LOG"]) if os.environ.get("ENROLLMENT_AUDIT_LOG") else None,
         single_tenant_id=os.environ.get("CONTROL_PLANE_TENANT_ID", "tenant-a"),
-        operator_token=os.environ.get("CONTROL_PLANE_OPERATOR_TOKEN"),
+        operator_token=validate_operator_token(os.environ.get("CONTROL_PLANE_OPERATOR_TOKEN")),
     )
     server.serve_forever()
 
