@@ -139,7 +139,9 @@ NODE_AGENT_CERTS_HOST_PATH=$PWD/.tmp/app-observability-mtls/agent/certs \
 NODE_AGENT_SECRETS_HOST_PATH=$PWD/.tmp/app-observability-mtls/agent/secrets \
 docker compose -f examples/app-observability/docker-compose.yaml up -d --build
 
-docker compose -f examples/app-observability/docker-compose.yaml exec orders-api npm run traffic
+docker compose -f examples/app-observability/docker-compose.yaml exec -T \
+  -e ORDERS_API_URL=http://localhost:8080 \
+  orders-api npm run traffic
 ```
 
 Open Grafana at `http://localhost:3000` and sign in with the local `.env` credentials (`admin` / `admin` by default). See the [application observability guide](docs/application-observability.md) for verification and troubleshooting.
@@ -250,7 +252,7 @@ The production-oriented profile is not highly available, multi-tenant, or a Kube
 - [Platform architecture](docs/platform-architecture.md)
 - [Trace and log correlation](docs/trace-log-correlation.md)
 - [Docker logging](docs/docker-logging.md)
-- [Remote log collection](docs/remote-log-collection.md)
+- [Node Agent migration](docs/remote-log-collection.md)
 
 ## Scope and Roadmap
 
