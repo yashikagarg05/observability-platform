@@ -106,6 +106,20 @@ class EnrollmentHelperTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "ENROLLMENT_ALLOW_DEVELOPMENT_ISSUER=true"):
                 enrollment_api.build_issuer()
 
+    def test_operator_token_rejects_placeholders_and_short_values(self) -> None:
+        with self.assertRaisesRegex(RuntimeError, "replaced"):
+            enrollment_api.validate_operator_token("changeme-long-random-operator-token")
+        with self.assertRaisesRegex(RuntimeError, "at least 32"):
+            enrollment_api.validate_operator_token("short-token")
+        self.assertEqual(enrollment_api.validate_operator_token("a" * 32), "a" * 32)
+
+    def test_cors_origin_fails_closed_when_operator_auth_is_enabled(self) -> None:
+        with patch.dict(os.environ, {}, clear=True):
+            self.assertEqual(enrollment_api.control_plane_cors_origin(None), "*")
+            self.assertIsNone(enrollment_api.control_plane_cors_origin("a" * 32))
+        with patch.dict(os.environ, {"FRONTEND_CORS_ORIGIN": "http://localhost:4173"}, clear=True):
+            self.assertEqual(enrollment_api.control_plane_cors_origin("a" * 32), "http://localhost:4173")
+
 
 if __name__ == "__main__":
     unittest.main()
