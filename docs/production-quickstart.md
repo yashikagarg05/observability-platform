@@ -7,7 +7,7 @@ This is the shortest supported path for a single-tenant production-style deploym
 - Linux host with Docker and Docker Compose.
 - Checked-out repository.
 - Production PKI material prepared outside the repository.
-- One long random operator token.
+- One long random operator token of at least 32 characters.
 
 For isolated validation only, `scripts/dev-mtls-certs.sh` may generate throwaway certificates. Do not use those certificates for production.
 
@@ -34,6 +34,8 @@ TRACE_RETENTION_HOURS
 For production, use `ENROLLMENT_ISSUER_MODE=external` and configure the command that integrates with the customer-managed CA. The platform fails closed if the external issuer command is missing. For isolated validation only, use `ENROLLMENT_ISSUER_MODE=development` with `ENROLLMENT_ALLOW_DEVELOPMENT_ISSUER=true` and throwaway certificates.
 
 The default production profile retains traces for `168` hours. Change `TRACE_RETENTION_HOURS` to adjust Tempo trace retention. This is a time-based retention limit on local filesystem storage, not a hard disk-capacity guarantee.
+
+Management interfaces bind to `127.0.0.1` by default. Keep that default for single-host use, or expose them only through an HTTPS reverse proxy or equivalent network control.
 
 ## 3. Start Platform
 
