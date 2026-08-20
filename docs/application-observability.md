@@ -55,46 +55,31 @@ Host telemetry:
 
 ## Run The Demo
 
-Create the local Compose environment file:
+From the repository root, start the platform, reference applications, and demo Node Agent:
 
 ```bash
-cp .env.example .env
-```
-
-Create development mTLS certificates for the demo:
-
-```bash
-GATEWAY_DNS=otel-collector \
-NODE_AGENT_AGENT_ID=app-observability-agent \
-NODE_AGENT_TENANT_ID=demo-tenant \
-NODE_AGENT_SITE_ID=demo-site \
-NODE_AGENT_ENVIRONMENT=development \
-./scripts/dev-mtls-certs.sh .tmp/app-observability-mtls
-```
-
-Start the platform with the Gateway mTLS listener:
-
-```bash
-GATEWAY_CERTS_HOST_PATH=$PWD/.tmp/app-observability-mtls/gateway/certs \
-GATEWAY_SECRETS_HOST_PATH=$PWD/.tmp/app-observability-mtls/gateway/secrets \
-docker compose -f docker-compose.yml -f deployments/docker-compose/gateway-mtls.yaml up -d
-```
-
-Start the reference applications and demo Node Agent:
-
-```bash
-NODE_AGENT_CERTS_HOST_PATH=$PWD/.tmp/app-observability-mtls/agent/certs \
-NODE_AGENT_SECRETS_HOST_PATH=$PWD/.tmp/app-observability-mtls/agent/secrets \
-docker compose -f examples/app-observability/docker-compose.yaml up -d --build
+make demo-up
 ```
 
 Generate deterministic traffic:
 
 ```bash
-docker compose -f examples/app-observability/docker-compose.yaml exec -T \
-  -e ORDERS_API_URL=http://localhost:8080 \
-  orders-api npm run traffic
+make demo-traffic
 ```
+
+Check container status:
+
+```bash
+make demo-ps
+```
+
+Stop the demo:
+
+```bash
+make demo-down
+```
+
+`make demo-up` creates `.env` when missing, generates throwaway development mTLS certificates under `.tmp/app-observability-mtls`, starts the platform with the Gateway mTLS listener, and builds the reference applications.
 
 Open Grafana:
 
