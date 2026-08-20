@@ -2,13 +2,13 @@
 
 `Node Agent -> OTLP -> Gateway -> Loki, Tempo, Prometheus -> Grafana`
 
-## Migration status
+## Deployment model
 
-The Node Agent package is ready for staged deployment. Existing gateway-local Docker/file receivers and legacy agent packages remain active until each node has been migrated and verified. Do not run a legacy source reader and Node Agent source reader against the same paths at the same time.
+The Node Agent package is the supported source-host deployment model. During staged migrations, existing gateway-local Docker/file receivers and legacy agent packages may remain active until each node has been migrated and verified. Do not run a legacy source reader and Node Agent source reader against the same paths at the same time.
 
 ## Node Agent
 
-`collector/agent` is the future single source-host deployment. It collects local Docker stdout, explicitly mounted files, local OTLP telemetry, and optional hostmetrics, then exports OTLP/gRPC only to the gateway. It contains no backend configuration. Its Prometheus receiver module is packaged but inactive, preserving backend routing ownership in the gateway.
+`collector/agent` is the single source-host deployment. It collects local Docker stdout, explicitly mounted files, local OTLP telemetry, and optional hostmetrics, then exports OTLP/gRPC only to the gateway. It contains no backend configuration. Its Prometheus receiver module is packaged but inactive, preserving backend routing ownership in the gateway.
 
 The current plaintext OTLP/gRPC transport remains available for migration. mTLS is implemented as an opt-in transport variant using generated `-mtls` Node Agent configs and the Gateway `config-mtls.yaml` migration listener; it does not change source capabilities or backend routing.
 

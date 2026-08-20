@@ -234,7 +234,7 @@ The production-oriented profile is not highly available, multi-tenant, or a Kube
 - [Platform architecture](docs/platform-architecture.md)
 - [Trace and log correlation](docs/trace-log-correlation.md)
 - [Docker logging](docs/docker-logging.md)
-- [Remote log collection](docs/remote-log-collection.md)
+- [Node Agent migration](docs/remote-log-collection.md)
 
 ## Scope and Roadmap
 
