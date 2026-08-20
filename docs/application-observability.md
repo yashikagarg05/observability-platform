@@ -91,7 +91,9 @@ docker compose -f examples/app-observability/docker-compose.yaml up -d --build
 Generate deterministic traffic:
 
 ```bash
-docker compose -f examples/app-observability/docker-compose.yaml exec orders-api npm run traffic
+docker compose -f examples/app-observability/docker-compose.yaml exec -T \
+  -e ORDERS_API_URL=http://localhost:8080 \
+  orders-api npm run traffic
 ```
 
 Open Grafana:
