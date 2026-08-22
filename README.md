@@ -76,19 +76,11 @@ flowchart LR
 
 ## Management & Control Plane
 
-This answers: “How are agents managed?”
+This path is optional for local telemetry collection. It answers: “How are Node Agents enrolled and operated across hosts?”
 
-```mermaid
-flowchart LR
-    CONSOLE["Platform Management Console"]
-    API["Control Plane API"]
-    REGISTRY["Agent Registry"]
-    AGENT["Node Agent"]
+![Management and Control Plane](docs/images/management-control-plane.svg)
 
-    CONSOLE -->|Operator workflows| API
-    API -->|Enrollment & lifecycle| REGISTRY
-    REGISTRY -->|Credentials / status / lifecycle| AGENT
-```
+For a concrete walkthrough, see the [Agent Management Lifecycle](docs/agent-management-lifecycle.md) guide.
 
 The architecture keeps collection, transport, processing, storage, and exploration separate:
 
@@ -96,7 +88,7 @@ The architecture keeps collection, transport, processing, storage, and explorati
 - **OpenTelemetry Gateway:** centralized receiver, processor, and signal router.
 - **Loki, Tempo, and Prometheus:** self-hosted log, trace, and metric backends. Prometheus scrapes metrics exposed by the Gateway.
 - **Grafana:** the primary UI for telemetry queries, dashboards, and exploration.
-- **Control Plane and Console:** enrollment, Agent Registry lifecycle, fleet status, and links to relevant Grafana views.
+- **Control Plane and Console:** optional production-oriented management for enrollment, Agent Registry lifecycle, fleet status, and links to relevant Grafana views.
 
 ## Capabilities
 
@@ -215,6 +207,7 @@ The production-oriented profile is not highly available, multi-tenant, or a Kube
 
 - [Production quickstart](docs/production-quickstart.md)
 - [Node Agent onboarding](docs/node-agent-onboarding.md)
+- [Agent Management Lifecycle](docs/agent-management-lifecycle.md)
 - [Application observability reference](docs/application-observability.md)
 
 ### Security and enrollment

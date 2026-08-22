@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 430" role="img" aria-labelledby="title description">
+  <title id="title">Management and Control Plane</title>
+  <desc id="description">The optional management path lets an operator use the Platform Management Console and Control Plane API to create enrollment credentials, enroll Node Agents, track heartbeats, and maintain Agent Registry state.</desc>
+  <defs>
+    <marker id="management-arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#4f46e5"/>
+    </marker>
+    <linearGradient id="canvas-gradient" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#f5f3ff"/>
+    </linearGradient>
+    <linearGradient id="card-gradient" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#eef2ff"/>
+    </linearGradient>
+    <filter id="soft-shadow" x="-8%" y="-8%" width="116%" height="116%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#0f172a" flood-opacity="0.12"/>
+    </filter>
+    <style>
+      .canvas { fill: url(#canvas-gradient); }
+      .card { fill: url(#card-gradient); stroke: #c4b5fd; stroke-width: 1.5; filter: url(#soft-shadow); }
+      .node { stroke-width: 1.75; filter: url(#soft-shadow); }
+      .node-operator { fill: #f8fafc; stroke: #64748b; }
+      .node-ui { fill: #f5f3ff; stroke: #7c3aed; }
+      .node-api { fill: #eef2ff; stroke: #4f46e5; }
+      .node-registry { fill: #ecfdf5; stroke: #059669; }
+      .node-agent { fill: #eff6ff; stroke: #2563eb; }
+      .node-grafana { fill: #fffbeb; stroke: #f59e0b; }
+      .title { fill: #0f172a; font: 700 28px Arial, Helvetica, sans-serif; }
+      .subtitle { fill: #475569; font: 400 15px Arial, Helvetica, sans-serif; }
+      .pill { fill: #ede9fe; stroke: #c4b5fd; stroke-width: 1; }
+      .pill-text { fill: #5b21b6; font: 700 12px Arial, Helvetica, sans-serif; letter-spacing: 1.3px; }
+      .node-title { fill: #0f172a; font: 700 16px Arial, Helvetica, sans-serif; }
+      .node-text { fill: #475569; font: 400 12px Arial, Helvetica, sans-serif; }
+      .node-small { fill: #64748b; font: 400 11px Arial, Helvetica, sans-serif; }
+      .line { fill: none; stroke: #4f46e5; stroke-width: 2.6; stroke-linecap: round; marker-end: url(#management-arrow); }
+      .line-soft { fill: none; stroke: #ddd6fe; stroke-width: 10; stroke-linecap: round; opacity: 0.65; }
+      .dashed { fill: none; stroke: #2563eb; stroke-width: 2.4; stroke-linecap: round; stroke-dasharray: 7 6; marker-end: url(#management-arrow); }
+      .label { fill: #4f46e5; font: 700 11px Arial, Helvetica, sans-serif; }
+      .agent-label { fill: #2563eb; font: 700 11px Arial, Helvetica, sans-serif; }
+    </style>
+  </defs>
+
+  <rect class="canvas" width="1200" height="430"/>
+  <text class="title" x="48" y="54">Management &amp; Control Plane</text>
+  <text class="subtitle" x="48" y="82">Optional production-oriented workflows for enrolling and operating Node Agents</text>
+
+  <rect class="card" x="34" y="110" width="1132" height="282" rx="18"/>
+  <rect class="pill" x="58" y="136" width="214" height="28" rx="14"/>
+  <text class="pill-text" x="76" y="155">OPTIONAL MANAGEMENT PATH</text>
+
+  <rect class="node node-operator" x="70" y="218" width="140" height="74" rx="12"/>
+  <text class="node-title" x="100" y="248">Operator</text>
+  <text class="node-text" x="100" y="270">Runs fleet</text>
+
+  <rect class="node node-ui" x="270" y="200" width="188" height="110" rx="14"/>
+  <text class="node-title" x="300" y="238">Platform Console</text>
+  <text class="node-text" x="300" y="262">Create credentials</text>
+  <text class="node-text" x="300" y="280">Inspect agent status</text>
+
+  <rect class="node node-api" x="520" y="200" width="188" height="110" rx="14"/>
+  <text class="node-title" x="550" y="238">Control Plane API</text>
+  <text class="node-text" x="550" y="262">Operator auth</text>
+  <text class="node-text" x="550" y="280">Enrollment lifecycle</text>
+
+  <rect class="node node-registry" x="770" y="200" width="188" height="110" rx="14"/>
+  <text class="node-title" x="800" y="238">Agent Registry</text>
+  <text class="node-text" x="800" y="262">Status, cert metadata</text>
+  <text class="node-text" x="800" y="280">Heartbeat, disable state</text>
+
+  <rect class="node node-grafana" x="1016" y="218" width="116" height="74" rx="12"/>
+  <text class="node-title" x="1040" y="248">Grafana</text>
+  <text class="node-text" x="1040" y="270">Drilldowns</text>
+
+  <rect class="node node-agent" x="522" y="330" width="186" height="52" rx="12"/>
+  <text class="node-title" x="552" y="353">Node Agent</text>
+  <text class="node-small" x="552" y="371">Private key stays local</text>
+
+  <path class="line-soft" d="M210 255 H270"/>
+  <path class="line" d="M210 255 H270"/>
+  <path class="line-soft" d="M458 255 H520"/>
+  <path class="line" d="M458 255 H520"/>
+  <text class="label" x="470" y="242">operator token</text>
+
+  <path class="line-soft" d="M708 255 H770"/>
+  <path class="line" d="M708 255 H770"/>
+  <text class="label" x="720" y="242">persist state</text>
+
+  <path class="line-soft" d="M958 255 H1016"/>
+  <path class="line" d="M958 255 H1016"/>
+  <text class="label" x="970" y="242">links</text>
+
+  <path class="dashed" d="M614 310 V330"/>
+  <text class="agent-label" x="632" y="323">credential, cert response</text>
+  <path class="dashed" d="M590 330 V310"/>
+  <text class="agent-label" x="402" y="323">CSR enrollment, heartbeat</text>
+</svg>

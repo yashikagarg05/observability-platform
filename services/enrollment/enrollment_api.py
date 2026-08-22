@@ -719,6 +719,21 @@ class EnrollmentHandler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:  # noqa: N802
         parsed = urlparse(self.path)
+        if parsed.path == "/":
+            self.send_json(
+                200,
+                {
+                    "service": "observability-control-plane",
+                    "status": "ok",
+                    "endpoints": {
+                        "health": "/healthz",
+                        "overview": "/v1/overview?tenant_id=<tenant>",
+                        "agents": "/v1/node-agents?tenant_id=<tenant>",
+                        "enrollment_credentials": "/v1/enrollment/credentials?tenant_id=<tenant>",
+                    },
+                },
+            )
+            return
         if parsed.path == "/healthz":
             self.send_json(200, {"status": "ok"})
             return
