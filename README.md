@@ -162,7 +162,17 @@ The included reference application and provisioned Grafana dashboards provide th
 - **Application Observability Reference** shows request rate, error rate, latency, recent logs, and demo counters for `orders-api` and `payment-api`.
 - **Platform Self-Monitoring** shows platform scrape health, Gateway telemetry, export failures, queues, CPU, and memory.
 
-Run the evaluation workflow above, open Grafana, and use the [application observability guide](docs/application-observability.md) to verify logs, metrics, traces, and correlation. The [visual asset checklist](docs/images/README.md) tracks screenshots to capture for the next public release.
+![Application observability dashboard](docs/images/application-dashboard.png)
+
+The demo includes cross-signal verification for application logs, metrics, and traces:
+
+| Signal | Example |
+| --- | --- |
+| Logs | ![Application logs in Loki](docs/images/application-logs.png) |
+| Metrics | ![Application metrics in Prometheus](docs/images/application-metrics.png) |
+| Traces | ![Application traces in Tempo](docs/images/application-trace.png) |
+
+Run the evaluation workflow above, open Grafana, and use the [application observability guide](docs/application-observability.md) to verify logs, metrics, traces, and correlation. The [visual asset checklist](docs/images/README.md) tracks remaining screenshots to capture for the next public release.
 
 ## How It Works
 
