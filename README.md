@@ -122,6 +122,16 @@ Open Grafana at `http://localhost:3000` and sign in with the local `.env` creden
 
 If port `3000` is already in use, change `GRAFANA_PORT` in `.env` before starting the stack. Stop the demo with `make demo-down`.
 
+### Integrate your own applications
+
+For applications running on other hosts, do not clone this repository onto every application server. Run the full platform centrally, download the Node Agent release artifact on each application host, enroll it, and point applications at the local Node Agent endpoint:
+
+```text
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+```
+
+Follow [Integrate Your Application](docs/integrate-your-application.md) for the end-to-end application host workflow.
+
 ### Production-oriented path
 
 The supported single-tenant path requires a Linux host with Docker and Docker Compose, a long random operator token, and production PKI material prepared outside this repository. Production enrollment uses an external/customer-managed issuer command.
@@ -208,6 +218,7 @@ The production-oriented profile is not highly available, multi-tenant, or a Kube
 - [Production quickstart](docs/production-quickstart.md)
 - [Node Agent onboarding](docs/node-agent-onboarding.md)
 - [Agent Management Lifecycle](docs/agent-management-lifecycle.md)
+- [Integrate Your Application](docs/integrate-your-application.md)
 - [Application observability reference](docs/application-observability.md)
 
 ### Security and enrollment
