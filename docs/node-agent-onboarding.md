@@ -1,9 +1,12 @@
 # Node Agent onboarding
 
+The Node Agent is installed from a release artifact on each application host. Application hosts should not clone the full Observability Platform repository.
+
 1. Download `otel-node-agent-<version>.tgz` and `SHA256SUMS` from the matching GitHub Release; verify the checksum.
 2. Extract it, then run `cp .env.example .env`.
 3. Set `GATEWAY_OTLP_GRPC_ENDPOINT`, `AGENT_HOST_NAME`, namespace, and environment.
-4. Select one source profile without editing YAML:
+4. If using managed enrollment, run `bin/enroll-node-agent.sh enroll` before starting the agent.
+5. Select one source profile without editing YAML:
 
 ```bash
 # Local OTLP intake
@@ -27,7 +30,9 @@ docker compose -f compose.yaml -f config/compose/docker-hostmetrics.yaml up -d
 docker compose -f compose.yaml -f config/compose/docker-file-hostmetrics.yaml up -d
 ```
 
-5. Verify `docker compose ps`, then query Grafana Explore using `service_name` and `host_name` for logs/traces. For hostmetrics profiles, query Prometheus for metrics such as `system_cpu_time_seconds_total`, `system_memory_usage_bytes`, `system_filesystem_usage_bytes`, and `system_network_io_bytes_total`.
+6. Verify `docker compose ps`, then query Grafana Explore using `service_name` and `host_name` for logs/traces. For hostmetrics profiles, query Prometheus for metrics such as `system_cpu_time_seconds_total`, `system_memory_usage_bytes`, `system_filesystem_usage_bytes`, and `system_network_io_bytes_total`.
+
+For a complete remote application host walkthrough, see [Integrate Your Application](integrate-your-application.md).
 
 ## mTLS transport
 
@@ -45,7 +50,7 @@ docker compose \
   up -d
 ```
 
-Use `bin/enroll-node-agent.sh request` to create the node private key and CSR, then `bin/enroll-node-agent.sh install` after the enrollment service returns the signed certificate and CA bundle.
+Use `bin/enroll-node-agent.sh enroll` with a one-time enrollment credential to create the node private key locally, submit the CSR, and install the signed certificate and CA bundle.
 
 ## Upgrade and rollback
 

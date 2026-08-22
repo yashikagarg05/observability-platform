@@ -76,14 +76,14 @@ curl -sS \
   -d '{"site_id":"site-1","environment":"production","capabilities":["otlp","hostmetrics"]}'
 ```
 
-Enroll the Node Agent on the target VM:
+Enroll the Node Agent on the target VM from inside the extracted `otel-node-agent-<version>` release artifact:
 
 ```bash
 NODE_AGENT_SECRET_DIR=/etc/otel-node-agent/secrets \
 NODE_AGENT_CERT_DIR=/etc/otel-node-agent/certs \
 NODE_AGENT_ENROLLMENT_ENDPOINT=http://localhost:${CONTROL_PLANE_PORT} \
 NODE_AGENT_ENROLLMENT_CREDENTIAL=<credential> \
-collector/agent/bin/enroll-node-agent.sh enroll
+bin/enroll-node-agent.sh enroll
 ```
 
 Send a heartbeat:
@@ -95,7 +95,7 @@ NODE_AGENT_ENROLLMENT_ENDPOINT=http://localhost:${CONTROL_PLANE_PORT} \
 AGENT_HOST_NAME=payments-vm-1 \
 NODE_AGENT_VERSION=1.1.0 \
 NODE_AGENT_CAPABILITIES=otlp,hostmetrics \
-collector/agent/bin/enroll-node-agent.sh heartbeat
+bin/enroll-node-agent.sh heartbeat
 ```
 
 List enrolled agents:
