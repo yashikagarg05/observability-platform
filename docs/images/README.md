@@ -8,6 +8,7 @@ Current assets:
 - `application-logs.png`: Grafana Explore showing Loki application logs.
 - `application-metrics.png`: Grafana Explore showing Prometheus application metrics.
 - `application-trace.png`: Grafana Explore showing Tempo application traces.
+- `management-control-plane.svg`: optional management and agent lifecycle overview used by the README.
 - `observability-platform-overview.svg`: architecture overview used by the README.
 
 ## Screenshot Checklist
@@ -18,7 +19,7 @@ Before the next public release, capture optimized PNG or WebP screenshots for:
 2. `application-logs.png`: Grafana Explore showing Loki application logs.
 3. `application-metrics.png`: Grafana Explore showing Prometheus application metrics.
 4. `application-trace.png`: Grafana Explore showing Tempo application traces.
-5. `platform-management-console`: Console overview or enrollment workflow from the production-style profile.
+5. `management-agent-lifecycle.png`: Console enrollment, healthy agent registry state, or both from the production-style profile.
 
 Guidelines:
 
