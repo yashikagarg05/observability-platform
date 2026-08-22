@@ -1,11 +1,21 @@
-.PHONY: help setup demo-certs demo-up demo-down demo-ps demo-traffic validate validate-production-compose validate-mtls test lint frontend-build acceptance package-node-agent verify-node-agent-release
+.PHONY: help setup demo-certs demo-up demo-down demo-ps demo-traffic demo-management-up demo-management-down demo-management-agent validate validate-production-compose validate-mtls test lint frontend-build acceptance package-node-agent verify-node-agent-release
 
 DEMO_MTLS_DIR := $(CURDIR)/.tmp/app-observability-mtls
 DEMO_GATEWAY_CERTS := $(DEMO_MTLS_DIR)/gateway/certs
 DEMO_GATEWAY_SECRETS := $(DEMO_MTLS_DIR)/gateway/secrets
 DEMO_AGENT_CERTS := $(DEMO_MTLS_DIR)/agent/certs
 DEMO_AGENT_SECRETS := $(DEMO_MTLS_DIR)/agent/secrets
+DEMO_MANAGEMENT_AGENT_DIR := $(CURDIR)/.tmp/demo-management-agent
+DEMO_MANAGEMENT_AGENT_CERTS := $(DEMO_MANAGEMENT_AGENT_DIR)/certs
+DEMO_MANAGEMENT_AGENT_SECRETS := $(DEMO_MANAGEMENT_AGENT_DIR)/secrets
+DEMO_CONTROL_PLANE_TENANT_ID ?= tenant-a
+DEMO_CONTROL_PLANE_OPERATOR_TOKEN ?= local-management-operator-token-1234567890
+DEMO_CONTROL_PLANE_URL ?= http://localhost:8080
+DEMO_PLATFORM_UI_URL ?= http://localhost:4173
+DEMO_GRAFANA_URL ?= http://localhost:3000
+DEMO_MANAGEMENT_AGENT_HOST ?= payments-vm-1
 PLATFORM_COMPOSE := docker compose -f docker-compose.yml -f deployments/docker-compose/gateway-mtls.yaml
+MANAGEMENT_COMPOSE := docker compose -f docker-compose.yml -f deployments/docker-compose/gateway-mtls.yaml -f deployments/docker-compose/production.yaml
 DEMO_APP_COMPOSE := docker compose -f examples/app-observability/docker-compose.yaml
 
 help:
@@ -14,6 +24,9 @@ help:
 		'  make setup                         Copy .env.example to .env when missing' \
 		'  make demo-up                       Generate dev certs and start the local demo stack' \
 		'  make demo-traffic                  Generate deterministic reference app traffic' \
+		'  make demo-management-up            Add Control Plane API and Platform UI to the demo stack' \
+		'  make demo-management-agent         Enroll a sample managed Node Agent and send heartbeat' \
+		'  make demo-management-down          Stop Control Plane API and Platform UI' \
 		'  make demo-ps                       Show platform and demo application containers' \
 		'  make demo-down                     Stop the local demo stack' \
 		'  make validate                      Validate base Compose and Gateway Collector config' \
@@ -66,6 +79,69 @@ demo-traffic:
 	NODE_AGENT_CERTS_HOST_PATH="$(DEMO_AGENT_CERTS)" \
 	NODE_AGENT_SECRETS_HOST_PATH="$(DEMO_AGENT_SECRETS)" \
 	$(DEMO_APP_COMPOSE) exec -T -e ORDERS_API_URL=http://localhost:8080 orders-api npm run traffic
+
+demo-management-up: setup demo-certs
+	GATEWAY_CERTS_HOST_PATH="$(DEMO_GATEWAY_CERTS)" \
+	GATEWAY_SECRETS_HOST_PATH="$(DEMO_GATEWAY_SECRETS)" \
+	ENROLLMENT_PKI_HOST_PATH="$(DEMO_MTLS_DIR)" \
+	ENROLLMENT_ISSUER_MODE=development \
+	ENROLLMENT_ALLOW_DEVELOPMENT_ISSUER=true \
+	ENROLLMENT_DEVELOPMENT_AGENT_CA_CERT=/tls/enrollment/ca/dev-agent-intermediate-ca.pem \
+	ENROLLMENT_DEVELOPMENT_AGENT_CA_KEY=/tls/enrollment/ca/dev-agent-intermediate-ca.key \
+	ENROLLMENT_DEVELOPMENT_AGENT_CA_BUNDLE=/tls/enrollment/gateway/certs/agent-ca-bundle.pem \
+	ENROLLMENT_GATEWAY_CA_BUNDLE=/tls/enrollment/gateway/certs/gateway-ca-bundle.pem \
+	CONTROL_PLANE_TENANT_ID="$(DEMO_CONTROL_PLANE_TENANT_ID)" \
+	CONTROL_PLANE_OPERATOR_TOKEN="$(DEMO_CONTROL_PLANE_OPERATOR_TOKEN)" \
+	CONTROL_PLANE_PORT=8080 \
+	CONTROL_PLANE_BIND_ADDRESS=127.0.0.1 \
+	PLATFORM_UI_PORT=4173 \
+	PLATFORM_UI_BIND_ADDRESS=127.0.0.1 \
+	PUBLIC_ENROLLMENT_ENDPOINT="$(DEMO_CONTROL_PLANE_URL)" \
+	PUBLIC_CONTROL_PLANE_API_URL="$(DEMO_CONTROL_PLANE_URL)" \
+	FRONTEND_CORS_ORIGIN="$(DEMO_PLATFORM_UI_URL)" \
+	GRAFANA_URL="$(DEMO_GRAFANA_URL)" \
+	PROMETHEUS_URL=http://prometheus:9090 \
+	GRAFANA_ADMIN_USER=admin \
+	GRAFANA_ADMIN_PASSWORD=admin \
+	GRAFANA_PORT=3000 \
+	PROMETHEUS_PORT=9090 \
+	$(MANAGEMENT_COMPOSE) up -d --force-recreate control-plane-api platform-ui
+
+demo-management-down:
+	GATEWAY_CERTS_HOST_PATH="$(DEMO_GATEWAY_CERTS)" \
+	GATEWAY_SECRETS_HOST_PATH="$(DEMO_GATEWAY_SECRETS)" \
+	ENROLLMENT_PKI_HOST_PATH="$(DEMO_MTLS_DIR)" \
+	ENROLLMENT_ISSUER_MODE=development \
+	CONTROL_PLANE_TENANT_ID="$(DEMO_CONTROL_PLANE_TENANT_ID)" \
+	CONTROL_PLANE_OPERATOR_TOKEN="$(DEMO_CONTROL_PLANE_OPERATOR_TOKEN)" \
+	GRAFANA_PORT=3000 \
+	PROMETHEUS_PORT=9090 \
+	$(MANAGEMENT_COMPOSE) stop control-plane-api platform-ui
+	GATEWAY_CERTS_HOST_PATH="$(DEMO_GATEWAY_CERTS)" \
+	GATEWAY_SECRETS_HOST_PATH="$(DEMO_GATEWAY_SECRETS)" \
+	ENROLLMENT_PKI_HOST_PATH="$(DEMO_MTLS_DIR)" \
+	ENROLLMENT_ISSUER_MODE=development \
+	CONTROL_PLANE_TENANT_ID="$(DEMO_CONTROL_PLANE_TENANT_ID)" \
+	CONTROL_PLANE_OPERATOR_TOKEN="$(DEMO_CONTROL_PLANE_OPERATOR_TOKEN)" \
+	GRAFANA_PORT=3000 \
+	PROMETHEUS_PORT=9090 \
+	$(MANAGEMENT_COMPOSE) rm -f control-plane-api platform-ui
+
+demo-management-agent:
+	credential=$$(DEMO_CONTROL_PLANE_URL="$(DEMO_CONTROL_PLANE_URL)" DEMO_CONTROL_PLANE_OPERATOR_TOKEN="$(DEMO_CONTROL_PLANE_OPERATOR_TOKEN)" DEMO_CONTROL_PLANE_TENANT_ID="$(DEMO_CONTROL_PLANE_TENANT_ID)" python3 -c 'import json, os, urllib.request; body = json.dumps({"site_id": "site-1", "environment": "production", "capabilities": ["otlp", "hostmetrics"]}).encode(); req = urllib.request.Request(os.environ["DEMO_CONTROL_PLANE_URL"].rstrip("/") + "/v1/enrollment/credentials?tenant_id=" + os.environ["DEMO_CONTROL_PLANE_TENANT_ID"], data=body, headers={"Authorization": "Bearer " + os.environ["DEMO_CONTROL_PLANE_OPERATOR_TOKEN"], "Content-Type": "application/json"}, method="POST"); print(json.loads(urllib.request.urlopen(req, timeout=10).read().decode())["enrollment_credential"])'); \
+	rm -rf "$(DEMO_MANAGEMENT_AGENT_DIR)"; \
+	NODE_AGENT_SECRET_DIR="$(DEMO_MANAGEMENT_AGENT_SECRETS)" \
+	NODE_AGENT_CERT_DIR="$(DEMO_MANAGEMENT_AGENT_CERTS)" \
+	NODE_AGENT_ENROLLMENT_ENDPOINT="$(DEMO_CONTROL_PLANE_URL)" \
+	NODE_AGENT_ENROLLMENT_CREDENTIAL="$$credential" \
+	collector/agent/bin/enroll-node-agent.sh enroll; \
+	NODE_AGENT_SECRET_DIR="$(DEMO_MANAGEMENT_AGENT_SECRETS)" \
+	NODE_AGENT_CERT_DIR="$(DEMO_MANAGEMENT_AGENT_CERTS)" \
+	NODE_AGENT_ENROLLMENT_ENDPOINT="$(DEMO_CONTROL_PLANE_URL)" \
+	AGENT_HOST_NAME="$(DEMO_MANAGEMENT_AGENT_HOST)" \
+	NODE_AGENT_VERSION=1.1.0 \
+	NODE_AGENT_CAPABILITIES=otlp,hostmetrics \
+	collector/agent/bin/enroll-node-agent.sh heartbeat
 
 validate:
 	docker compose --env-file .env.example config --quiet
