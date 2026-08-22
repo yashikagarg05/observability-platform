@@ -77,12 +77,14 @@ Save the returned `enrollment_credential`. It is displayed only when created and
 
 ## 6. Enroll Node Agent
 
+On the application host, download and extract the `otel-node-agent-<version>.tgz` artifact from the matching GitHub Release. Run enrollment from inside the extracted directory:
+
 ```bash
 NODE_AGENT_SECRET_DIR=/etc/otel-node-agent/secrets \
 NODE_AGENT_CERT_DIR=/etc/otel-node-agent/certs \
 NODE_AGENT_ENROLLMENT_ENDPOINT=http://localhost:${CONTROL_PLANE_PORT} \
 NODE_AGENT_ENROLLMENT_CREDENTIAL=<credential> \
-collector/agent/bin/enroll-node-agent.sh enroll
+bin/enroll-node-agent.sh enroll
 ```
 
 Then send a heartbeat:
@@ -94,7 +96,7 @@ NODE_AGENT_ENROLLMENT_ENDPOINT=http://localhost:${CONTROL_PLANE_PORT} \
 AGENT_HOST_NAME=$(hostname) \
 NODE_AGENT_VERSION=1.1.0 \
 NODE_AGENT_CAPABILITIES=otlp,hostmetrics \
-collector/agent/bin/enroll-node-agent.sh heartbeat
+bin/enroll-node-agent.sh heartbeat
 ```
 
 ## 7. Verify Agent
