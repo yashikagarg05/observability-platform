@@ -1,0 +1,1 @@
+{"bomFormat":"CycloneDX","specVersion":"1.5","version":1,"metadata":{"component":{"type":"application","name":"otel-node-agent","version":"v0.1.0"}},"components":[{"type":"container","name":"otel/opentelemetry-collector-contrib","version":"0.156.0"}]}
