@@ -1,0 +1,403 @@
+#!/usr/bin/env python3
+"""Tee a local process's stdout/stderr to the terminal and export OTLP logs."""
+
+from __future__ import annotations
+
+import json
+import os
+import queue
+import signal
+import subprocess
+import sys
+import threading
+import time
+import urllib.error
+import urllib.request
+from pathlib import Path
+from typing import Mapping, Sequence
+
+DEFAULT_ENDPOINT = "http://127.0.0.1:4318"
+BATCH_SIZE = 50
+BATCH_INTERVAL_S = 0.2
+QUEUE_MAXSIZE = 1000
+EXPORT_TIMEOUT_S = 1.0
+FLUSH_TIMEOUT_S = 3.0
+PUMP_JOIN_TIMEOUT_S = 2.0
+SCOPE_NAME = "otel-run"
+DEFAULT_NAMESPACE = "applications"
+DEFAULT_ENVIRONMENT = "development"
+
+USAGE = """\
+usage: otel-run [--service NAME] [--endpoint URL] [--] <command> [args...]
+
+Capture stdout and stderr from a local process, keep them on the terminal,
+and send each line as an OTLP log to the Node Agent.
+
+Examples:
+  otel-run npm run dev
+  otel-run python app.py
+  otel-run java -jar app.jar
+  otel-run --service orders-api -- npm run dev
+
+Use this for local processes that only emit stdout/stderr and are not
+otherwise instrumented (not Docker, not file logs, no OTLP SDK).
+
+The Node Agent must expose OTLP HTTP on localhost:4318, which is published
+by the otlp and otlp-hostmetrics profiles. Docker-only and file profiles
+do not publish that port.
+
+Default endpoint: OTEL_EXPORTER_OTLP_ENDPOINT or http://127.0.0.1:4318
+Default service.name: --service, else OTEL_SERVICE_NAME, else command basename
+"""
+
+
+class ParseError(Exception):
+    """Invalid command-line arguments."""
+
+
+class HelpRequested(Exception):
+    """Caller asked for --help."""
+
+
+class Options:
+    def __init__(self, service: str | None, endpoint: str | None, command: list[str]) -> None:
+        self.service = service
+        self.endpoint = endpoint
+        self.command = command
+
+
+def parse_argv(argv: Sequence[str]) -> Options:
+    service: str | None = None
+    endpoint: str | None = None
+    index = 0
+    while index < len(argv):
+        arg = argv[index]
+        if arg == "--":
+            index += 1
+            break
+        if arg in ("-h", "--help"):
+            raise HelpRequested
+        if arg == "--service":
+            index += 1
+            if index >= len(argv):
+                raise ParseError("--service requires a value")
+            service = argv[index]
+            index += 1
+            continue
+        if arg.startswith("--service="):
+            service = arg.split("=", 1)[1]
+            index += 1
+            continue
+        if arg == "--endpoint":
+            index += 1
+            if index >= len(argv):
+                raise ParseError("--endpoint requires a value")
+            endpoint = argv[index]
+            index += 1
+            continue
+        if arg.startswith("--endpoint="):
+            endpoint = arg.split("=", 1)[1]
+            index += 1
+            continue
+        if arg.startswith("-"):
+            raise ParseError(f"unknown option: {arg}")
+        break
+    command = list(argv[index:])
+    if not command:
+        raise ParseError("command is required")
+    return Options(service, endpoint, command)
+
+
+def default_service_name(command: Sequence[str], explicit: str | None, env: Mapping[str, str]) -> str:
+    if explicit:
+        return explicit
+    from_env = env.get("OTEL_SERVICE_NAME", "").strip()
+    if from_env:
+        return from_env
+    return Path(command[0]).name
+
+
+def logs_url(endpoint: str | None, env: Mapping[str, str]) -> str:
+    base = (endpoint or env.get("OTEL_EXPORTER_OTLP_ENDPOINT") or DEFAULT_ENDPOINT).rstrip("/")
+    if base.endswith("/v1/logs"):
+        return base
+    return f"{base}/v1/logs"
+
+
+def _string_attr(key: str, value: str) -> dict[str, object]:
+    return {"key": key, "value": {"stringValue": value}}
+
+
+def resource_attributes(service_name: str, env: Mapping[str, str]) -> list[dict[str, object]]:
+    namespace = env.get("OTEL_SERVICE_NAMESPACE", "").strip() or DEFAULT_NAMESPACE
+    environment = env.get("OTEL_DEPLOYMENT_ENVIRONMENT", "").strip() or DEFAULT_ENVIRONMENT
+    return [
+        _string_attr("service.name", service_name),
+        _string_attr("service.namespace", namespace),
+        _string_attr("deployment.environment", environment),
+    ]
+
+
+def log_record(body: str, iostream: str, time_unix_nano: int) -> dict[str, object]:
+    if iostream == "stderr":
+        severity_number, severity_text = 17, "ERROR"
+    else:
+        severity_number, severity_text = 9, "INFO"
+    return {
+        "timeUnixNano": str(time_unix_nano),
+        "severityNumber": severity_number,
+        "severityText": severity_text,
+        "body": {"stringValue": body},
+        "attributes": [
+            _string_attr("log.source.type", "process"),
+            _string_attr("log.iostream", iostream),
+        ],
+    }
+
+
+def build_payload(
+    records: Sequence[dict[str, object]],
+    service_name: str,
+    env: Mapping[str, str],
+) -> dict[str, object]:
+    return {
+        "resourceLogs": [
+            {
+                "resource": {"attributes": resource_attributes(service_name, env)},
+                "scopeLogs": [
+                    {
+                        "scope": {"name": SCOPE_NAME},
+                        "logRecords": list(records),
+                    }
+                ],
+            }
+        ]
+    }
+
+
+class LogExporter:
+    def __init__(self, url: str, service_name: str, env: Mapping[str, str]) -> None:
+        self.url = url
+        self.service_name = service_name
+        self.env = env
+        self.queue: queue.Queue[dict[str, object]] = queue.Queue(maxsize=QUEUE_MAXSIZE)
+        self._stop = threading.Event()
+        self._lock = threading.Lock()
+        self._export_warned = False
+        self._queue_full_warned = False
+        self._thread = threading.Thread(target=self._run, name="otel-run-export", daemon=False)
+
+    def start(self) -> None:
+        self._thread.start()
+
+    def enqueue(self, iostream: str, line: str) -> None:
+        record = log_record(line, iostream, time.time_ns())
+        try:
+            self.queue.put_nowait(record)
+        except queue.Full:
+            self._warn_queue_full()
+
+    def _run(self) -> None:
+        batch: list[dict[str, object]] = []
+        deadline: float | None = None
+        while not self._stop.is_set():
+            if batch:
+                remaining = (deadline or time.monotonic()) - time.monotonic()
+                if remaining <= 0:
+                    self._flush(batch)
+                    batch = []
+                    deadline = None
+                    continue
+                timeout = remaining
+            else:
+                timeout = 0.05
+            try:
+                record = self.queue.get(timeout=timeout)
+            except queue.Empty:
+                if self._stop.is_set():
+                    break
+                if batch:
+                    self._flush(batch)
+                    batch = []
+                    deadline = None
+                continue
+            batch.append(record)
+            if deadline is None:
+                deadline = time.monotonic() + BATCH_INTERVAL_S
+            if len(batch) >= BATCH_SIZE:
+                self._flush(batch)
+                batch = []
+                deadline = None
+        self._drain(batch)
+
+    def _drain(self, batch: list[dict[str, object]]) -> None:
+        while True:
+            try:
+                batch.append(self.queue.get_nowait())
+            except queue.Empty:
+                break
+            if len(batch) >= BATCH_SIZE:
+                self._flush(batch)
+                batch.clear()
+        if batch:
+            self._flush(batch)
+            batch.clear()
+
+    def _flush(self, batch: Sequence[dict[str, object]]) -> None:
+        if not batch:
+            return
+        payload = json.dumps(build_payload(batch, self.service_name, self.env)).encode("utf-8")
+        request = urllib.request.Request(
+            self.url,
+            data=payload,
+            method="POST",
+            headers={
+                "Content-Type": "application/json",
+                "User-Agent": "otel-run",
+            },
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=EXPORT_TIMEOUT_S) as response:
+                response.read()
+        except (urllib.error.URLError, TimeoutError, OSError) as exc:
+            self._warn(exc)
+        except Exception as exc:  # noqa: BLE001 - fail-open for any export error
+            self._warn(exc)
+
+    def _warn(self, exc: BaseException) -> None:
+        with self._lock:
+            if self._export_warned:
+                return
+            self._export_warned = True
+        print(
+            f"otel-run: warning: OTLP log export failed ({exc}); continuing without blocking the child",
+            file=sys.stderr,
+        )
+
+    def _warn_queue_full(self) -> None:
+        with self._lock:
+            if self._queue_full_warned:
+                return
+            self._queue_full_warned = True
+        print("otel-run: warning: OTLP log queue full; dropping logs", file=sys.stderr)
+
+    def stop(self, timeout: float = FLUSH_TIMEOUT_S) -> None:
+        self._stop.set()
+        self._thread.join(timeout=timeout)
+
+
+def _pump(stream, dest, iostream: str, exporter: LogExporter) -> None:
+    buffer = b""
+    try:
+        while True:
+            chunk = stream.read(4096)
+            if not chunk:
+                break
+            dest.write(chunk)
+            dest.flush()
+            buffer += chunk
+            while b"\n" in buffer:
+                line, buffer = buffer.split(b"\n", 1)
+                exporter.enqueue(iostream, line.decode("utf-8", errors="replace").rstrip("\r"))
+        if buffer:
+            exporter.enqueue(iostream, buffer.decode("utf-8", errors="replace").rstrip("\r"))
+    finally:
+        try:
+            stream.close()
+        except OSError:
+            pass
+
+
+def _forward_signal(signum: int, holder: dict[str, subprocess.Popen[bytes] | None]) -> None:
+    proc = holder.get("proc")
+    if proc is None or proc.poll() is not None:
+        return
+    try:
+        os.killpg(proc.pid, signum)
+    except ProcessLookupError:
+        return
+    except OSError:
+        try:
+            proc.send_signal(signum)
+        except ProcessLookupError:
+            return
+
+
+def _exit_status(returncode: int) -> int:
+    if returncode < 0:
+        return 128 + (-returncode)
+    return returncode
+
+
+def run(options: Options, env: Mapping[str, str] | None = None) -> int:
+    environ = env if env is not None else os.environ
+    service_name = default_service_name(options.command, options.service, environ)
+    exporter = LogExporter(logs_url(options.endpoint, environ), service_name, environ)
+    exporter.start()
+
+    holder: dict[str, subprocess.Popen[bytes] | None] = {"proc": None}
+
+    def handler(signum: int, _frame: object) -> None:
+        _forward_signal(signum, holder)
+
+    previous = {}
+    for signum in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
+        previous[signum] = signal.signal(signum, handler)
+
+    try:
+        try:
+            proc = subprocess.Popen(
+                options.command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                start_new_session=True,
+                bufsize=0,
+            )
+        except FileNotFoundError:
+            print(f"otel-run: command not found: {options.command[0]}", file=sys.stderr)
+            return 127
+        except OSError as exc:
+            print(f"otel-run: failed to start {options.command[0]}: {exc}", file=sys.stderr)
+            return 126
+
+        holder["proc"] = proc
+        stdout_thread = threading.Thread(
+            target=_pump,
+            args=(proc.stdout, sys.stdout.buffer, "stdout", exporter),
+            name="otel-run-stdout",
+            daemon=False,
+        )
+        stderr_thread = threading.Thread(
+            target=_pump,
+            args=(proc.stderr, sys.stderr.buffer, "stderr", exporter),
+            name="otel-run-stderr",
+            daemon=False,
+        )
+        stdout_thread.start()
+        stderr_thread.start()
+        returncode = proc.wait()
+        stdout_thread.join(timeout=PUMP_JOIN_TIMEOUT_S)
+        stderr_thread.join(timeout=PUMP_JOIN_TIMEOUT_S)
+        return _exit_status(returncode)
+    finally:
+        for signum, prior in previous.items():
+            signal.signal(signum, prior)
+        exporter.stop()
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    args = list(sys.argv[1:] if argv is None else argv)
+    try:
+        options = parse_argv(args)
+    except HelpRequested:
+        print(USAGE, end="")
+        return 0
+    except ParseError as exc:
+        print(f"otel-run: {exc}", file=sys.stderr)
+        print(USAGE, end="", file=sys.stderr)
+        return 2
+    return run(options)
+
+
+if __name__ == "__main__":
+    sys.exit(main())
