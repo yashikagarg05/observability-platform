@@ -10,6 +10,7 @@ This project uses semantic versioning for platform releases. Component-specific 
 
 - Root `.env.example` for fresh-clone local evaluation.
 - Open-source contributor documentation and project templates.
+- `otel-run` host helper to tee uninstrumented local process stdout/stderr into Node Agent OTLP logs.
 
 ### Changed
 
