@@ -1,1 +1,0 @@
-{"nodeAgentVersion":"v0.1.0","collectorImage":"otel/opentelemetry-collector-contrib:0.156.0@sha256:125bdbeb7590cc1952c5b3430ecf14063568980c2c93d5b38676cc0446ed8108","gatewayCompatibility":">=1.0.0 <2.0.0"}
