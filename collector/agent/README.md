@@ -85,3 +85,16 @@ docker compose -f compose.yaml -f config/compose/docker-hostmetrics.yaml -f conf
 ```
 
 The package includes `bin/enroll-node-agent.sh` to create a local private key and CSR, enroll against the MVP enrollment API, or install a signed client certificate and CA bundle. See `docs/node-agent-mtls.md` and `docs/node-agent-enrollment-mvp.md` in the repository for the full enrollment and Gateway migration model.
+
+## Uninstrumented local processes
+
+Use `bin/otel-run` when a local process only writes stdout/stderr and is not otherwise instrumented: it is not running in Docker, does not write application log files, and does not emit OTLP itself.
+
+```bash
+bin/otel-run npm run dev
+bin/otel-run python app.py
+bin/otel-run java -jar app.jar
+bin/otel-run --service orders-api -- npm run dev
+```
+
+`otel-run` keeps the child's output on the terminal and sends each line to the Node Agent as an OTLP log. It requires Python 3. The Node Agent must expose OTLP HTTP on `localhost:4318`, which is published by the `otlp` and `otlp-hostmetrics` profiles. Docker-only and file profiles do not publish that port, so `otel-run` cannot reach the agent with those profiles.
