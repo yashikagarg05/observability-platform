@@ -128,6 +128,21 @@ payments-api -> localhost:4318
 worker       -> localhost:4318
 ```
 
+### Uninstrumented local processes
+
+If a process only prints to the terminal and is not otherwise instrumented (not Docker, not file logs, no OTLP SDK), wrap it with `otel-run`:
+
+```bash
+bin/otel-run npm run dev
+bin/otel-run python app.py
+bin/otel-run java -jar app.jar
+bin/otel-run --service orders-api -- npm run dev
+```
+
+`otel-run` tees stdout and stderr to the terminal and POSTs each line to the Node Agent as OTLP logs. It does not replace application instrumentation for metrics or traces.
+
+The Node Agent must expose OTLP HTTP on `localhost:4318`. That is already true for the `otlp` and `otlp-hostmetrics` profiles used above. Docker-only and file profiles do not publish that port.
+
 ## 7. Verify In Grafana
 
 Logs:
