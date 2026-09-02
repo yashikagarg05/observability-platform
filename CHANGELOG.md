@@ -6,11 +6,18 @@ This project uses semantic versioning for platform releases. Component-specific 
 
 ## Unreleased
 
+### Added
+
+- Root `.env.example` for fresh-clone local evaluation.
+- Open-source contributor documentation and project templates.
+
+### Changed
+
+- README quick start now leads with the local evaluation workflow before the production-oriented path.
+
 ## v0.1.0
 
-First public release. The Node Agent is distributed as GitHub Release artifacts (`otel-node-agent-v0.1.0.tgz`, `SHA256SUMS`, `manifest.json`, `sbom.json`), not by cloning this repository onto every application host.
-
-### Added
+Initial public release scope:
 
 - Docker Compose observability stack with Grafana, Prometheus, Loki, Tempo, node-exporter, and OpenTelemetry Collector Gateway.
 - Node Agent profiles for OTLP, Docker logs, file logs, host metrics, and mTLS transport.
@@ -18,15 +25,6 @@ First public release. The Node Agent is distributed as GitHub Release artifacts 
 - Control Plane API and Platform Management Console for enrollment, registry, lifecycle, and fleet visibility workflows.
 - Reference `orders-api` / `payment-api` application for validating logs, metrics, traces, and log-to-trace correlation.
 - Production PKI templates and development certificate helpers.
-- Root `.env.example` for fresh-clone local evaluation.
-- Open-source contributor documentation and project templates.
-- Local demo and optional management demo Make targets.
-- Remote application-host guide: download the Node Agent package, enroll, and send OTLP to `localhost:4318`.
-- `otel-run` host helper to tee uninstrumented local process stdout/stderr into Node Agent OTLP logs.
-
-### Changed
-
-- README quick start now leads with the local evaluation workflow before the production-oriented path.
 
 Known limits:
 

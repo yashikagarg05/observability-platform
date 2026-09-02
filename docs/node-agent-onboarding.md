@@ -32,8 +32,6 @@ docker compose -f compose.yaml -f config/compose/docker-file-hostmetrics.yaml up
 
 6. Verify `docker compose ps`, then query Grafana Explore using `service_name` and `host_name` for logs/traces. For hostmetrics profiles, query Prometheus for metrics such as `system_cpu_time_seconds_total`, `system_memory_usage_bytes`, `system_filesystem_usage_bytes`, and `system_network_io_bytes_total`.
 
-For a local process that only emits stdout/stderr and is not otherwise instrumented, wrap it with `bin/otel-run npm run dev` (or `python app.py`, `java -jar app.jar`). The Node Agent must expose OTLP HTTP on `localhost:4318`, so use the `otlp` or `otlp-hostmetrics` profile. Docker-only and file profiles do not publish that port.
-
 For a complete remote application host walkthrough, see [Integrate Your Application](integrate-your-application.md).
 
 ## mTLS transport
