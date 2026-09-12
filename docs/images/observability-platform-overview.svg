@@ -53,7 +53,7 @@
   <rect class="node node-app" x="70" y="190" width="190" height="84" rx="12"/>
   <text class="node-title" x="94" y="222">Applications</text>
   <text class="node-text" x="94" y="244">OTLP logs, metrics, traces</text>
-  <text class="node-small" x="94" y="262">orders-api, payment-api, services</text>
+  <text class="node-small" x="94" y="262">orders-api, payment-api</text>
 
   <rect class="node node-infra" x="70" y="312" width="190" height="96" rx="12"/>
   <text class="node-title" x="94" y="346">Infrastructure</text>
@@ -66,9 +66,9 @@
   <text class="node-text" x="362" y="324">application OTLP intake</text>
 
   <rect class="node node-gateway" x="592" y="244" width="218" height="110" rx="14"/>
-  <text class="node-title" x="620" y="282">OpenTelemetry Gateway</text>
-  <text class="node-text" x="620" y="306">Normalize, enrich, batch,</text>
-  <text class="node-text" x="620" y="324">and route telemetry</text>
+  <text class="node-title" x="612" y="282">OpenTelemetry Gateway</text>
+  <text class="node-text" x="612" y="306">Normalize, enrich, batch,</text>
+  <text class="node-text" x="612" y="324">and route telemetry</text>
 
   <rect class="node node-loki" x="880" y="168" width="168" height="70" rx="12"/>
   <text class="node-title" x="906" y="199">Loki</text>
@@ -101,7 +101,7 @@
   <path class="telemetry-line" d="M810 299 H846 V203 H880"/>
   <path class="telemetry-line" d="M810 299 H880"/>
   <path class="telemetry-line" d="M810 299 H846 V395 H880"/>
-  <text class="arrow-label" x="828" y="282">route by signal</text>
+  <text class="node-small" x="880" y="350">Prometheus scrapes the Gateway</text>
   <path class="connector" d="M1048 203 H1066 V276 H1084"/>
   <path class="connector" d="M1048 299 H1084"/>
   <path class="connector" d="M1048 395 H1066 V322 H1084"/>

@@ -13,13 +13,9 @@ Current assets:
 
 ## Screenshot Checklist
 
-Before the next public release, capture optimized PNG or WebP screenshots for:
+Still to capture before the next public release:
 
-1. `application-dashboard.png`: Grafana dashboard after demo traffic.
-2. `application-logs.png`: Grafana Explore showing Loki application logs.
-3. `application-metrics.png`: Grafana Explore showing Prometheus application metrics.
-4. `application-trace.png`: Grafana Explore showing Tempo application traces.
-5. `management-agent-lifecycle.png`: Console enrollment, healthy agent registry state, or both from the production-style profile.
+- `management-agent-lifecycle.png`: Console enrollment, healthy agent registry state, or both from the production-style profile.
 
 Guidelines:
 

@@ -46,7 +46,7 @@
   <text class="subtitle" x="48" y="82">Optional production-oriented workflows for enrolling and operating Node Agents</text>
 
   <rect class="card" x="34" y="110" width="1132" height="282" rx="18"/>
-  <rect class="pill" x="58" y="136" width="214" height="28" rx="14"/>
+  <rect class="pill" x="58" y="136" width="246" height="28" rx="14"/>
   <text class="pill-text" x="76" y="155">OPTIONAL MANAGEMENT PATH</text>
 
   <rect class="node node-operator" x="70" y="218" width="140" height="74" rx="12"/>
@@ -78,13 +78,14 @@
 
   <path class="line-soft" d="M210 255 H270"/>
   <path class="line" d="M210 255 H270"/>
+  <text class="label" x="218" y="242">signs in</text>
   <path class="line-soft" d="M458 255 H520"/>
   <path class="line" d="M458 255 H520"/>
-  <text class="label" x="470" y="242">operator token</text>
+  <text class="label" x="474" y="242">token</text>
 
   <path class="line-soft" d="M708 255 H770"/>
   <path class="line" d="M708 255 H770"/>
-  <text class="label" x="720" y="242">persist state</text>
+  <text class="label" x="716" y="242">persist</text>
 
   <path class="line-soft" d="M958 255 H1016"/>
   <path class="line" d="M958 255 H1016"/>
@@ -93,5 +94,5 @@
   <path class="dashed" d="M614 310 V330"/>
   <text class="agent-label" x="632" y="323">credential, cert response</text>
   <path class="dashed" d="M590 330 V310"/>
-  <text class="agent-label" x="402" y="323">CSR enrollment, heartbeat</text>
+  <text class="agent-label" x="438" y="323">CSR enrollment, heartbeat</text>
 </svg>
